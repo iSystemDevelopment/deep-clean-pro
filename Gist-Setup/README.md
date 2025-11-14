@@ -1,200 +1,336 @@
-# 📝 GitHub Gist Setup Instructions
+# 🚀 **Deep Clean Pro – Gist Launcher Guide**
 
-This directory contains the launcher script that should be uploaded to GitHub Gist for creating "online" shortcuts that always run the latest version of Deep Clean Pro from your repository.
+### *Lightweight, secure, zero-install entry point for Deep Clean Pro.*
 
-## 🎯 Why Use a Gist Launcher?
+The **Gist Launcher** is the recommended way for users to run Deep Clean Pro with **one command**, without downloading, installing, or extracting anything.
 
-The Gist launcher provides several benefits:
-- **Always Current**: Shortcuts always run the latest version from your repository
-- **No Local Updates**: Users don't need to update local files
-- **Easy Distribution**: Share a single Gist URL instead of files
-- **Central Control**: Update the script once, affects all users
-- **Security**: Only pulls from your verified GitHub repository
+It acts as a **bootstrap loader** that:
 
-## 📋 Setup Steps
+* Downloads the latest DeepCleanPro.ps1
+* Validates the script
+* Applies environment variables for profiles
+* Passes through flags and settings
+* Executes safely with proper logging
+* Handles retries, network issues, and validation
 
-### Step 1: Prepare the Launcher Script
-
-1. Open `gist-launcher.ps1` in this directory
-2. **IMPORTANT**: Update line 22 with your repository URL:
-   ```powershell
-   RepoUrl = "https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/DeepCleanPro.ps1"
-   ```
-3. Save the file
-
-### Step 2: Create a GitHub Gist
-
-1. **Sign in to GitHub**
-   - Go to [https://github.com](https://github.com)
-   - Sign in to your account
-
-2. **Navigate to Gist**
-   - Go to [https://gist.github.com](https://gist.github.com)
-   - Click the "+" or "New gist" button (top right)
-
-3. **Create the Gist**
-   - **Gist description**: `Deep Clean Pro - GitHub Launcher v1.0`
-   - **Filename**: `DeepCleanPro-Launcher.ps1`
-   - **Content**: Copy and paste the entire content of `gist-launcher.ps1`
-
-4. **Choose Visibility**
-   - **Secret Gist** (Recommended): Only accessible via direct link
-   - **Public Gist**: Visible to everyone, searchable
-
-5. **Create the Gist**
-   - Click "Create secret gist" or "Create public gist"
-
-### Step 3: Get the Raw URL
-
-1. After creating the Gist, you'll see your new Gist page
-2. Click the **"Raw"** button (top right of the code area)
-3. Copy the URL from your browser's address bar
-
-The Raw URL will look like:
-```
-https://gist.githubusercontent.com/YOUR-USERNAME/GIST-ID/raw/HASH/DeepCleanPro-Launcher.ps1
-```
-
-### Step 4: Create Desktop Shortcuts
-
-Now use this Raw URL to create shortcuts that pull from GitHub:
-
-```powershell
-# Navigate to your Deep Clean Pro installation
-cd C:\DeepCleanPro\Scripts
-
-# Run the shortcut creator with your Gist URL
-.\CreateDesktopShortcuts.ps1 -GistLauncherURL "YOUR-RAW-GIST-URL"
-```
-
-This will create three online shortcuts:
-- **Deep Clean Pro (Online)** - Full mode from GitHub
-- **Deep Clean Pro Quick (Online)** - Quick mode from GitHub  
-- **Deep Clean Pro Test (Online)** - Test mode from GitHub
-
-## 🔧 Customization Options
-
-### Repository URL
-If you've forked the repository, update the `RepoUrl` in the launcher:
-```powershell
-$Script:Config = @{
-    RepoUrl = "https://raw.githubusercontent.com/YOUR-FORK/deep-clean-pro/main/DeepCleanPro.ps1"
-    # ...
-}
-```
-
-### Timeout Settings
-Adjust for slow connections:
-```powershell
-$Script:Config = @{
-    # ...
-    Timeout = 60        # Increase timeout to 60 seconds
-    RetryCount = 5      # Increase retry attempts
-    RetryDelay = 3      # Wait longer between retries
-}
-```
-
-### Custom Branch
-To pull from a different branch:
-```powershell
-RepoUrl = "https://raw.githubusercontent.com/USER/REPO/development/DeepCleanPro.ps1"
-#                                                      ^^^^^^^^^^^ 
-#                                                      Your branch name
-```
-
-## 🔒 Security Considerations
-
-### For Secret Gists
-- Only share the URL with trusted users
-- URLs are long and hard to guess but not encrypted
-- Can be deleted anytime from your Gist page
-
-### For Public Gists
-- Anyone can view and fork
-- Good for open-source distributions
-- Can track stars and forks
-
-### Best Practices
-1. **Never include sensitive data** in the launcher
-2. **Always verify** the repository URL is correct
-3. **Use HTTPS** URLs only (not HTTP)
-4. **Regularly review** Gist access logs if public
-5. **Update cautiously** - changes affect all users immediately
-
-## 🚀 Testing Your Launcher
-
-### Manual Test
-```powershell
-# Test the launcher directly
-irm 'YOUR-RAW-GIST-URL' | iex
-```
-
-### Test with Parameters
-```powershell
-# Test Quick Mode
-$env:DCP_QUICK_MODE='true'; irm 'YOUR-RAW-GIST-URL' | iex
-
-# Test WhatIf Mode
-$WhatIfPreference=$true; irm 'YOUR-RAW-GIST-URL' | iex
-```
-
-## 📝 Updating the Launcher
-
-To update the launcher after creation:
-
-1. Go to your Gist page: [https://gist.github.com/YOUR-USERNAME](https://gist.github.com/YOUR-USERNAME)
-2. Click on your Deep Clean Pro launcher Gist
-3. Click "Edit" button
-4. Make your changes
-5. Click "Update secret gist" or "Update public gist"
-
-**Note**: Updates are immediate - all users will get the new version on next run
-
-## ❓ Troubleshooting
-
-### Common Issues
-
-**"Cannot download from GitHub"**
-- Check internet connection
-- Verify GitHub isn't blocked by firewall
-- Try accessing the Raw URL directly in a browser
-
-**"Script appears invalid"**
-- Ensure the Gist contains the complete script
-- Check for copy/paste errors
-- Verify the Raw URL is correct
-
-**"Administrator privileges required"**
-- Right-click shortcut → Run as administrator
-- Or run PowerShell as admin first
-
-**"Repository not found"**
-- Check the repository URL in the launcher
-- Ensure repository is public or accessible
-- Verify branch name is correct
-
-## 📊 Example Gist Structure
-
-Your Gist page should show:
-```
-DeepCleanPro-Launcher.ps1
-Deep Clean Pro - GitHub Launcher v1.0
-Created X minutes ago • 0 stars • 0 forks
-
-[Raw] [Blame] [History]
-
-1  | <#
-2  | .SYNOPSIS
-3  |     Deep Clean Pro - GitHub Launcher Script
-...
-```
-
-## 🔗 Useful Links
-
-- [GitHub Gists Documentation](https://docs.github.com/en/github/writing-on-github/creating-gists)
-- [PowerShell Execution Policies](https://docs.microsoft.com/powershell/module/microsoft.powershell.core/about/about_execution_policies)
-- [Deep Clean Pro Repository](https://github.com/iSystemDevelopment/deep-clean-pro)
+This file explains how the launcher works and how to customize it safely.
 
 ---
 
-**Need Help?** Create an issue in the main repository or contact support@isystem.app
+# 📌 **What the Launcher Does**
+
+When a user runs:
+
+```powershell
+irm 'https://gist.githubusercontent.com/.../raw/gist-launcher.ps1' | iex
+```
+
+The launcher will:
+
+---
+
+## ✔️ 1. Check System Preconditions
+
+The launcher verifies:
+
+* Internet connectivity
+* PowerShell version
+* Admin privileges (with warning if not elevated)
+* Ability to reach GitHub (`raw.githubusercontent.com`)
+
+---
+
+## ✔️ 2. Download the Latest Deep Clean Pro Script
+
+Uses a configured endpoint:
+
+```
+RepoUrl = "https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1"
+```
+
+It supports:
+
+* Main branch
+* Feature branches
+* Forks
+* Private mirrors (when auth headers are added)
+
+The launcher retries intelligently if GitHub rate-limits or drops TLS.
+
+---
+
+## ✔️ 3. Validate Downloaded Script
+
+Checks:
+
+* HTTP status
+* Content size (>1000 bytes)
+* Keyword signatures such as `"Deep Clean Pro"`
+* Optional SHA256 verification (if configured)
+
+If validation fails:
+
+* User receives a readable error
+* Script will **never execute invalid content**
+
+---
+
+## ✔️ 4. Execute Deep Clean Pro in a Temporary Workspace
+
+Launcher writes the downloaded script to a temp `.ps1` with:
+
+```
+$env:TEMP\DeepCleanPro\tmpXXXX.ps1
+```
+
+Then executes:
+
+```powershell
+& $tempFile @arguments
+```
+
+### Environment variables supported:
+
+* `$env:DCP_PROFILE`
+* `$env:DCP_QUICK_MODE`
+* `$env:DCP_NO_REBOOT`
+
+This is how your shortcut pack automatically preloads profiles.
+
+---
+
+## ✔️ 5. Cleanup Temporary Files
+
+After execution, the launcher **automatically deletes** the temp script unless the user enables debug mode.
+
+---
+
+# ⚙️ **Launcher Configuration**
+
+Inside `gist-launcher.ps1`, you have:
+
+```powershell
+$Script:Config = @{
+    RepoUrl    = "https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1"
+    ValidateUrl = "https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/Scripts/VALIDATE.ps1"
+    Timeout     = 30
+    RetryCount  = 3
+    RetryDelay  = 2
+}
+```
+
+### You may safely change:
+
+| Key           | Purpose                                   |
+| ------------- | ----------------------------------------- |
+| `RepoUrl`     | Where DeepCleanPro.ps1 is downloaded from |
+| `ValidateUrl` | Optional validation endpoint              |
+| `Timeout`     | HTTP timeout seconds                      |
+| `RetryCount`  | How many times to retry failed downloads  |
+| `RetryDelay`  | Seconds between retries                   |
+
+### Supported customizations:
+
+✔ Switch to your `development` branch
+✔ Point to a corporate Git server
+✔ Redirect to a private fork
+✔ Inject tokens for protected URLs
+✔ Replace validation script with a corporate policy tool
+
+---
+
+# 🧱 **Internal Launcher Workflow**
+
+The Gist launcher is intentionally **minimal**, **secure**, and **transparent**:
+
+```
+User runs irm/iex → Gist launcher → Validates →
+Downloads DCP → Writes temp script →
+Builds argument list → Executes DCP →
+Cleans up → Exits gracefully
+```
+
+### Key internals:
+
+* Uses **Invoke-WebRequest** (not Invoke-Expression on unknown content)
+* Does not modify system settings directly
+* Does not require installation
+* Does not persist files
+* Does not write to registry
+
+---
+
+# 🔒 **Security Features**
+
+The launcher includes:
+
+### ✔ TLS 1.2 enforcement
+
+Ensures secure HTTPS communication.
+
+### ✔ GitHub domain allowlists
+
+Prevents MITM attacks via alternate hosts.
+
+### ✔ Content-size checks
+
+Rejects truncated content (common in MITM fail-open proxies).
+
+### ✔ Keyword-based validation
+
+Confirms downloaded script is the correct codebase.
+
+### ✔ Optional SHA256 signatures
+
+You may embed a whitelist of trusted script hashes.
+
+### ✔ WhatIf compliance
+
+If the user appends `-WhatIf`, the main script activates simulation mode.
+
+---
+
+# 🔐 **Adding Script Integrity Protection (Optional)**
+
+You can enable extra security:
+
+```powershell
+$TrustedHashes = @(
+   "YOUR_DEEPCLEANPRO_SHA256_HASH_HERE"
+)
+
+if ($downloadedHash -notin $TrustedHashes) {
+    throw "Script integrity verification failed."
+}
+```
+
+---
+
+# 🌍 **Distributing Your Own Branded Launcher**
+
+You can create:
+
+* A second Gist (Beta channel)
+* A corporate Gist (Enterprise channel)
+* A localized launcher (different languages)
+
+Simply update:
+
+```powershell
+RepoUrl = "https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1"
+```
+
+or point to your fork:
+
+```powershell
+RepoUrl = "https://raw.githubusercontent.com/MyOrg/DeepCleanPro/main/DeepCleanPro.ps1"
+```
+
+---
+
+# 🖥️ **Running the Launcher (End User Guide)**
+
+### Standard Run (default)
+
+```powershell
+irm "GIST_URL" | iex
+```
+
+### With gaming profile:
+
+```powershell
+$env:DCP_PROFILE='Gaming'
+irm "GIST_URL" | iex
+```
+
+### With Quick Mode:
+
+```powershell
+$env:DCP_QUICK_MODE='true'
+irm "GIST_URL" | iex
+```
+
+### WhatIf simulation (no changes made):
+
+```powershell
+irm "GIST_URL" | iex -WhatIf
+```
+
+---
+
+# 🧪 **Testing the Launcher**
+
+Technicians can use:
+
+```powershell
+.\gist-launcher.ps1 -Debug
+```
+
+or simulate failures:
+
+* Disconnect network
+* Change RepoUrl to an invalid address
+* Remove "Deep Clean Pro" string
+* Reduce `RetryCount = 1`
+
+---
+
+# 🆘 **Troubleshooting**
+
+### ❗ “Admin privileges required”
+
+User must right-click → Run as Administrator
+OR the launcher warns and exits gracefully.
+
+### ❗ “Could not download script”
+
+Possible reasons:
+
+* GitHub blocked by firewall
+* Internet connection unstable
+* TLS handshake failure
+* Corporate proxy stripping content
+
+### ❗ Script downloaded but fails validation
+
+Fix:
+
+* Update RepoUrl
+* Ensure valid DeepCleanPro.ps1 exists
+* Check branch name
+* Check raw URL
+
+### ❗ OneDrive paths missing
+
+Occurs if user has no OneDrive installed — safe to ignore.
+
+---
+
+# 🏆 **Why Use the Launcher Instead of Manual Download?**
+
+* Zero installation
+* Always current version
+* No ZIP extraction
+* No file clutter
+* Perfect for tutorials
+* Perfect for social media “1-click” shares
+* Perfect for enterprise machines with read-only system partitions
+* Perfect for kiosk / classroom / test environments
+
+---
+
+# 🤝 **Contributing to the Launcher**
+
+If you want to extend the launcher:
+
+* Keep it **small**
+* Keep it **secure**
+* Avoid adding heavy modules
+* Do not embed Deep Clean Pro code
+* Avoid storing state on disk
+* Ask in Discussions before major changes
+
+---
+
+# 🎉 **The Gist Launcher Makes Deep Clean Pro Instantly Accessible**
+
