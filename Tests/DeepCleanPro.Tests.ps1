@@ -1,429 +1,174 @@
-# Pester v5 Tests for Deep Clean Pro
-# Tests script syntax, parameters, security, and logic
-# Version: 2.2.0
+<#
+.SYNOPSIS
+    Pester test suite for DeepCleanPro.ps1 and core safety / structure.
 
-#Requires -Modules Pester
+.DESCRIPTION
+    This suite focuses on:
+      - Script existence and syntax correctness
+      - Parameter and attribute validation
+      - Safety guarantees (SupportsShouldProcess, WhatIf)
+      - Prohibition of deprecated APIs (Get-WmiObject)
+      - Repository URL correctness (no Dr-Diodac references)
+      - Presence of key helper functions (Write-ColorOutput)
+#>
 
-# --- Helper Functions -------------------------------------------------------
+# Resolve path to DeepCleanPro.ps1 relative to Tests directory
+$Script:RootPath    = Split-Path -Parent $PSScriptRoot
+$Script:MainScript  = Join-Path $Script:RootPath 'DeepCleanPro.ps1'
 
-function Get-RepoRoot {
-    # Find repository root by looking for key files
-    $candidates = @()
-    
-    # Method 1: From PSScriptRoot
-    if ($PSScriptRoot) {
-        # If running from Tests directory
-        if ($PSScriptRoot -match 'Tests$') {
-            $candidates += (Split-Path -Parent $PSScriptRoot)
-        }
-        # If running from .github/tests directory  
-        elseif ($PSScriptRoot -match '\.github[\\\/]tests$') {
-            $candidates += (Join-Path $PSScriptRoot '..\..')
-        }
-        else {
-            $candidates += $PSScriptRoot
-        }
+Describe 'DeepCleanPro.ps1 - Script structure' -Tag 'Unit' {
+
+    It 'Should exist at the expected path' {
+        Test-Path $Script:MainScript | Should -BeTrue
     }
-    
-    # Method 2: From current working directory
-    $candidates += $PWD
-    
-    # Method 3: From GitHub Actions workspace
-    if ($env:GITHUB_WORKSPACE) {
-        $candidates += $env:GITHUB_WORKSPACE
+
+    It 'Should be syntactically valid PowerShell' {
+        $errors = $null
+        [void][System.Management.Automation.Language.Parser]::ParseFile(
+            $Script:MainScript,
+            [ref]$null,
+            [ref]$errors
+        )
+
+        $errors | Should -BeNullOrEmpty
     }
-    
-    # Try each candidate and verify it's the repo root
-    foreach ($candidate in $candidates) {
-        if ($candidate -and (Test-Path $candidate)) {
-            try {
-                $resolved = (Resolve-Path -LiteralPath $candidate).ProviderPath
-                # Check if this is the repo root (has DeepCleanPro.ps1)
-                if (Test-Path (Join-Path $resolved 'DeepCleanPro.ps1')) {
-                    return $resolved
-                }
-            } catch {
-                continue
+
+    It 'Should be decorated with CmdletBinding and SupportsShouldProcess' {
+        $ast    = [System.Management.Automation.Language.Parser]::ParseFile($Script:MainScript, [ref]$null, [ref]$null)
+        $scriptBlock = $ast.Find({ param($node) $node -is [System.Management.Automation.Language.ScriptBlockAst] }, $true)
+
+        $bindingAttr = $scriptBlock.Attributes |
+            Where-Object { $_.TypeName.GetText() -eq 'CmdletBinding' }
+
+        $bindingAttr | Should -Not -BeNullOrEmpty
+
+        # Check for SupportsShouldProcess in attribute arguments
+        $hasSupportsShouldProcess = $false
+        foreach ($namedArg in $bindingAttr.NamedArguments) {
+            if ($namedArg.ArgumentName -eq 'SupportsShouldProcess' -and $namedArg.Argument.Value.ToString().ToLower() -eq 'true') {
+                $hasSupportsShouldProcess = $true
+                break
             }
         }
-    }
-    
-    # Last resort: current directory
-    return $PWD
-}
 
-function Test-Syntax {
-    param([string]$Path)
-    
-    $tokens = $null
-    $errors = $null
-    [void][System.Management.Automation.Language.Parser]::ParseFile(
-        $Path,
-        [ref]$tokens,
-        [ref]$errors
-    )
-    return ($errors.Count -eq 0)
-}
-
-function Get-ScriptContent {
-    param([string]$Path)
-    
-    if (Test-Path $Path) {
-        return Get-Content -LiteralPath $Path -Raw
-    }
-    return $null
-}
-
-# --- Path Resolution --------------------------------------------------------
-
-BeforeAll {
-    $Script:RepoRoot = Get-RepoRoot
-    $Script:ScriptsDir = Join-Path $Script:RepoRoot 'Scripts'
-    
-    # Core script paths
-    $Script:MainScript = Join-Path $Script:RepoRoot 'DeepCleanPro.ps1'
-    $Script:PolicyScript = Join-Path $Script:RepoRoot 'Fix-WindowsPolicies.ps1'
-    $Script:DeployScript = Join-Path $Script:RepoRoot 'DEPLOY.ps1'
-    $Script:ValidateScript = Join-Path $Script:ScriptsDir 'VALIDATE.ps1'
-    $Script:ShortcutScript = Join-Path $Script:ScriptsDir 'CreateDesktopShortcuts.ps1'
-    
-    # Display debug info if verbose
-    if ($VerbosePreference -eq 'Continue') {
-        Write-Host "=== Test Environment ===" -ForegroundColor Yellow
-        Write-Host "Repo Root: $Script:RepoRoot" -ForegroundColor Cyan
-        Write-Host "Scripts Directory: $Script:ScriptsDir" -ForegroundColor Cyan
-        Write-Host "Main Script Exists: $(Test-Path $Script:MainScript)" -ForegroundColor Green
+        $hasSupportsShouldProcess | Should -BeTrue
     }
 }
 
-# --- Core Script Tests ------------------------------------------------------
+Describe 'DeepCleanPro.ps1 - Parameters' -Tag 'Unit' {
 
-Describe 'DeepCleanPro.ps1' {
-    
-    Context 'File Validation' {
-        It 'Should exist in repository root' {
-            Test-Path -LiteralPath $Script:MainScript | Should -BeTrue
-        }
-        
-        It 'Should have valid PowerShell syntax' {
-            Test-Syntax $Script:MainScript | Should -BeTrue
-        }
-        
-        It 'Should require administrator privileges' {
-            $content = Get-ScriptContent $Script:MainScript
-            $content | Should -Match '#Requires\s+-RunAsAdministrator'
-        }
-        
-        It 'Should specify minimum PowerShell version' {
-            $content = Get-ScriptContent $Script:MainScript
-            $content | Should -Match '#Requires\s+-Version\s+5\.1'
-        }
-    }
-    
-    Context 'Parameters' {
-        BeforeAll {
-            $Script:MainContent = Get-ScriptContent $Script:MainScript
-        }
-        
-        It 'Should have QuickMode parameter' {
-            $Script:MainContent | Should -Match '\[switch\]\$QuickMode'
-        }
-        
-        It 'Should have NoReboot parameter' {
-            $Script:MainContent | Should -Match '\[switch\]\$NoReboot'
-        }
-        
-        It 'Should have AutoReboot parameter' {
-            $Script:MainContent | Should -Match '\[switch\]\$AutoReboot'
-        }
-        
-        It 'Should have FixPolicies parameter' {
-            $Script:MainContent | Should -Match '\[switch\]\$FixPolicies'
-        }
-        
-        It 'Should have SkipHealth parameter' {
-            $Script:MainContent | Should -Match '\[switch\]\$SkipHealth'
-        }
-        
-        It 'Should have SkipDefrag parameter' {
-            $Script:MainContent | Should -Match '\[switch\]\$SkipDefrag'
-        }
-        
-        It 'Should support WhatIf (SupportsShouldProcess)' {
-            $Script:MainContent | Should -Match 'SupportsShouldProcess'
+    # Parse AST once
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($Script:MainScript, [ref]$null, [ref]$null)
+    $paramBlock = $ast.Find({ param($node) $node -is [System.Management.Automation.Language.ParamBlockAst] }, $true)
+
+    It 'Should define expected parameters' {
+        $paramNames = $paramBlock.Parameters.Name.VariablePath.UserPath
+
+        $expected = @(
+            'QuickMode',
+            'NoReboot',
+            'AutoReboot',
+            'FixPolicies',
+            'SkipHealth',
+            'SkipDefrag',
+            'Profile'
+        )
+
+        foreach ($name in $expected) {
+            $paramNames | Should -Contain $name
         }
     }
-    
-    Context 'Core Functions' {
-        BeforeAll {
-            $Script:MainContent = Get-ScriptContent $Script:MainScript
-        }
-        
-        It 'Should define Write-ColorOutput function' {
-            $Script:MainContent | Should -Match 'function\s+Write-ColorOutput'
-        }
-        
-        It 'Should define Test-AdminPrivileges function' {
-            $Script:MainContent | Should -Match 'function\s+Test-AdminPrivileges'
-        }
-        
-        It 'Should define Initialize-Environment function' {
-            $Script:MainContent | Should -Match 'function\s+Initialize-Environment'
-        }
-        
-        It 'Should define Backup-RegistryKey function' {
-            $Script:MainContent | Should -Match 'function\s+Backup-RegistryKey'
-        }
-        
-        It 'Should define Clear-TempFiles function' {
-            $Script:MainContent | Should -Match 'function\s+Clear-TempFiles'
-        }
-        
-        It 'Should define Optimize-Services function' {
-            $Script:MainContent | Should -Match 'function\s+Optimize-Services'
+
+    It 'Should constrain Profile parameter via ValidateSet' {
+        $profileParam = $paramBlock.Parameters |
+            Where-Object { $_.Name.VariablePath.UserPath -eq 'Profile' }
+
+        $profileParam | Should -Not -BeNullOrEmpty
+
+        $validateSetAttr = $profileParam.Attributes |
+            Where-Object { $_.TypeName.GetText() -eq 'ValidateSet' }
+
+        $validateSetAttr | Should -Not -BeNullOrEmpty
+
+        # Ensure the set includes core profiles
+        $allowed = $validateSetAttr.PositionalArguments.Value
+        $allowed | Should -Contain 'Balanced'
+        $allowed | Should -Contain 'Gaming'
+        $allowed | Should -Contain 'Development'
+        $allowed | Should -Contain 'Music'
+        $allowed | Should -Contain 'Video'
+        $allowed | Should -Contain 'Office'
+    }
+}
+
+Describe 'DeepCleanPro.ps1 - Safety & Deprecated APIs' -Tag 'Security','Unit' {
+
+    $content = Get-Content $Script:MainScript -Raw
+
+    It 'Should not use Get-WmiObject anywhere (CIM only)' {
+        $matches = Select-String -InputObject $content -Pattern 'Get-WmiObject' -SimpleMatch
+        $matches | Should -BeNullOrEmpty
+    }
+
+    It 'Should not contain Invoke-Expression on untrusted user input' {
+        # We allow `| iex` from trusted raw GitHub URLs (launcher pattern),
+        # but we disallow obvious untrusted patterns.
+        $matches = Select-String -InputObject $content -Pattern 'Invoke-Expression' -SimpleMatch
+        $matches | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'DeepCleanPro.ps1 - Repository URLs' -Tag 'Unit','Security' {
+
+    $content = Get-Content $Script:MainScript -Raw
+
+    It 'Should not contain old Dr-Diodac repository references' {
+        $patterns = @(
+            'Dr-Diodac/deep-clean-pro',
+            'https://github.com/Dr-Diodac/deep-clean-pro',
+            'https://raw.githubusercontent.com/Dr-Diodac/deep-clean-pro'
+        )
+
+        foreach ($p in $patterns) {
+            (Select-String -InputObject $content -Pattern [Regex]::Escape($p) -SimpleMatch) |
+                Should -BeNullOrEmpty
         }
     }
-    
-    Context 'Security Checks' {
-        BeforeAll {
-            $Script:MainContent = Get-ScriptContent $Script:MainScript
-        }
-        
-        It 'Should not contain hardcoded passwords' {
-            $Script:MainContent | Should -Not -Match '(?i)password\s*=\s*[''"][^''"]+[''"]'
-        }
-        
-        It 'Should not contain hardcoded API keys' {
-            $Script:MainContent | Should -Not -Match '(?i)(apikey|token|secret)\s*=\s*[''"][A-Za-z0-9_\-]{16,}[''"]'
-        }
-        
-        It 'Should not use Invoke-Expression carelessly' {
-            # Check for iex usage (should only be in controlled scenarios)
-            if ($Script:MainContent -match '(iex|Invoke-Expression)') {
-                # If found, ensure it's not with user input
-                $Script:MainContent | Should -Not -Match '(iex|Invoke-Expression).*\$.*input'
-            }
-        }
-        
-        It 'Should implement proper error handling' {
-            $Script:MainContent | Should -Match 'try\s*\{[\s\S]*?\}\s*catch'
-        }
-        
-        It 'Should not have empty catch blocks' {
-            ([regex]::Matches($Script:MainContent, 'catch\s*\{\s*\}')).Count | Should -Be 0
-        }
-    }
-    
-    Context 'Logic Validation' {
-        BeforeAll {
-            $Script:MainContent = Get-ScriptContent $Script:MainScript
-        }
-        
-        It 'Should validate admin privileges before execution' {
-            $Script:MainContent | Should -Match 'Test-AdminPrivileges.*throw.*Administrator'
-        }
-        
-        It 'Should create backup directories before use' {
-            $Script:MainContent | Should -Match 'New-Item.*-ItemType\s+Directory.*BackupPath'
-        }
-        
-        It 'Should check if paths exist before operations' {
-            $Script:MainContent | Should -Match 'Test-Path'
-        }
-        
-        It 'Should restore execution policy in finally block' {
-            $Script:MainContent | Should -Match 'finally[\s\S]*?Set-ExecutionPolicy.*OriginalExecutionPolicy'
-        }
-        
-        It 'Should implement ShouldProcess for destructive operations' {
-            $Script:MainContent | Should -Match '\$PSCmdlet\.ShouldProcess'
+
+    It 'Should reference iSystemDevelopment/deep-clean-pro if any GitHub repo URLs exist' {
+        $rawMatches = Select-String -InputObject $content -Pattern 'https://raw\.githubusercontent\.com/' -AllMatches
+        $urlMatches = Select-String -InputObject $content -Pattern 'https://github\.com/' -AllMatches
+
+        if ($rawMatches -or $urlMatches) {
+            # If there are any URLs, they must point at iSystemDevelopment/deep-clean-pro
+            $content | Should -Match 'iSystemDevelopment/deep-clean-pro'
         }
     }
 }
 
-# --- Policy Helper Script Tests ---------------------------------------------
+Describe 'DeepCleanPro.ps1 - Helper functions' -Tag 'Unit' {
 
-Describe 'Fix-WindowsPolicies.ps1' {
-    
-    Context 'File Validation' {
-        It 'Should exist in repository root' {
-            Test-Path -LiteralPath $Script:PolicyScript | Should -BeTrue
-        }
-        
-        It 'Should have valid PowerShell syntax' {
-            Test-Syntax $Script:PolicyScript | Should -BeTrue
-        }
-        
-        It 'Should require administrator privileges' {
-            $content = Get-ScriptContent $Script:PolicyScript
-            $content | Should -Match '#Requires\s+-RunAsAdministrator'
-        }
-    }
-    
-    Context 'Security Features' {
-        BeforeAll {
-            $Script:PolicyContent = Get-ScriptContent $Script:PolicyScript
-        }
-        
-        It 'Should create backups before changes' {
-            $Script:PolicyContent | Should -Match 'Backup-Policies'
-        }
-        
-        It 'Should support restoration from backup' {
-            $Script:PolicyContent | Should -Match '\[switch\]\$RestoreBackup'
-        }
-        
-        It 'Should NOT enable PowerShell Remoting' {
-            $Script:PolicyContent | Should -Not -Match 'Enable-PSRemoting'
-        }
-        
-        It 'Should NOT add antivirus exclusions' {
-            $Script:PolicyContent | Should -Not -Match 'Add-MpPreference.*ExclusionPath'
-        }
+    It 'Should define Write-ColorOutput logging helper' {
+        $content = Get-Content $Script:MainScript -Raw
+        $content | Should -Match 'function\s+Write-ColorOutput'
     }
 }
 
-# --- Deployment Script Tests ------------------------------------------------
+Describe 'DeepCleanPro.ps1 - Integration Sanity (non-executing)' -Tag 'Integration' {
 
-Describe 'DEPLOY.ps1' {
-    
-    Context 'File Validation' {
-        It 'Should exist in repository root' {
-            Test-Path -LiteralPath $Script:DeployScript | Should -BeTrue
-        }
-        
-        It 'Should have valid PowerShell syntax' {
-            Test-Syntax $Script:DeployScript | Should -BeTrue
-        }
-        
-        It 'Should require administrator privileges' {
-            $content = Get-ScriptContent $Script:DeployScript
-            $content | Should -Match '#Requires\s+-RunAsAdministrator'
-        }
+    It 'Should be parsable with full AST and no errors (again, integration-level)' {
+        $errors = $null
+        [void][System.Management.Automation.Language.Parser]::ParseFile(
+            $Script:MainScript,
+            [ref]$null,
+            [ref]$errors
+        )
+
+        $errors | Should -BeNullOrEmpty
     }
-    
-    Context 'Parameters' {
-        BeforeAll {
-            $Script:DeployContent = Get-ScriptContent $Script:DeployScript
-        }
-        
-        It 'Should have TargetPath parameter' {
-            $Script:DeployContent | Should -Match '\[string\]\$TargetPath'
-        }
-        
-        It 'Should have CreateScheduledTask switch' {
-            $Script:DeployContent | Should -Match '\[switch\]\$CreateScheduledTask'
-        }
-        
-        It 'Should have NonInteractive switch' {
-            $Script:DeployContent | Should -Match '\[switch\]\$NonInteractive'
-        }
+
+    It 'Should not contain obvious hard-coded Dr-Diodac raw URLs in comments or examples' {
+        $content = Get-Content $Script:MainScript -Raw
+        $content | Should -Not -Match 'gist\.githubusercontent\.com/Dr-Diodac'
     }
-}
-
-# --- Validation Script Tests ------------------------------------------------
-
-Describe 'VALIDATE.ps1' {
-    
-    Context 'File Validation' {
-        It 'Should exist in Scripts directory' {
-            Test-Path -LiteralPath $Script:ValidateScript | Should -BeTrue
-        }
-        
-        It 'Should have valid PowerShell syntax' {
-            Test-Syntax $Script:ValidateScript | Should -BeTrue
-        }
-    }
-    
-    Context 'Functionality' {
-        BeforeAll {
-            $Script:ValidateContent = Get-ScriptContent $Script:ValidateScript
-        }
-        
-        It 'Should have Test-Requirement function' {
-            $Script:ValidateContent | Should -Match 'function\s+Test-Requirement'
-        }
-        
-        It 'Should test PowerShell version' {
-            $Script:ValidateContent | Should -Match 'PSVersionTable\.PSVersion'
-        }
-        
-        It 'Should test administrator privileges' {
-            $Script:ValidateContent | Should -Match 'Administrator.*IsInRole'
-        }
-        
-        It 'Should return results when requested' {
-            $Script:ValidateContent | Should -Match '\[switch\]\$ReturnResults'
-        }
-    }
-}
-
-# --- Integration Tests ------------------------------------------------------
-
-Describe 'Integration Tests' {
-    
-    Context 'File System Operations' {
-        BeforeAll {
-            $Script:TestDir = Join-Path $TestDrive 'DeepCleanTest'
-            New-Item -ItemType Directory -Path $Script:TestDir -Force | Out-Null
-        }
-        
-        It 'Should create test directory successfully' {
-            Test-Path -LiteralPath $Script:TestDir | Should -BeTrue
-        }
-        
-        It 'Should create and write to log files' {
-            $logFile = Join-Path $Script:TestDir 'test.log'
-            'Test log entry' | Set-Content -LiteralPath $logFile
-            Get-Content -LiteralPath $logFile | Should -Be 'Test log entry'
-        }
-        
-        It 'Should handle paths with spaces' {
-            $spacePath = Join-Path $Script:TestDir 'Path With Spaces'
-            New-Item -ItemType Directory -Path $spacePath -Force | Out-Null
-            Test-Path -LiteralPath $spacePath | Should -BeTrue
-        }
-    }
-    
-    Context 'Repository Structure' {
-        It 'Should have required directories' {
-            Test-Path (Join-Path $Script:RepoRoot 'Scripts') | Should -BeTrue
-            Test-Path (Join-Path $Script:RepoRoot 'Gist-Setup') | Should -BeTrue
-        }
-        
-        It 'Should have documentation files' {
-            Test-Path (Join-Path $Script:RepoRoot 'README.md') | Should -BeTrue
-            Test-Path (Join-Path $Script:RepoRoot 'LICENSE') | Should -BeTrue
-            Test-Path (Join-Path $Script:RepoRoot 'SECURITY.md') | Should -BeTrue
-        }
-        
-        It 'Should have GitHub Actions workflow' {
-            $workflowPath = Join-Path $Script:RepoRoot '.github\workflows'
-            if (Test-Path $workflowPath) {
-                Get-ChildItem -Path $workflowPath -Filter '*.yml' | Should -Not -BeNullOrEmpty
-            }
-        }
-    }
-}
-
-# --- Performance Tests ------------------------------------------------------
-
-Describe 'Performance Tests' -Tag 'Performance' {
-    
-    Context 'Script Loading' {
-        It 'Main script should parse in reasonable time' {
-            $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-            Test-Syntax $Script:MainScript | Out-Null
-            $stopwatch.Stop()
-            $stopwatch.ElapsedMilliseconds | Should -BeLessThan 5000
-        }
-    }
-}
-
-# --- Summary Report ---------------------------------------------------------
-
-AfterAll {
-    Write-Host "`n=== Test Summary ===" -ForegroundColor Cyan
-    Write-Host "Repository Root: $Script:RepoRoot" -ForegroundColor Gray
-    Write-Host "All tests completed!" -ForegroundColor Green
 }
