@@ -22,7 +22,8 @@ echo.
 echo [*] Running in TEST MODE (no changes will be made)...
 echo.
 
-PowerShell -NoProfile -ExecutionPolicy Bypass -Command "& {Start-Process PowerShell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -Command \"$WhatIfPreference=$true; irm ''https://gist.githubusercontent.com/Dr-Diodac/25787f26b3506573bd4df4c42d1ffce7/raw/DeepCleanPro-Launcher.ps1'' | iex\"' -Verb RunAs}"
+PowerShell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "& {Start-Process PowerShell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -Command \"$WhatIfPreference=$true; irm ''https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1'' | iex\"' -Verb RunAs}"
 
 echo.
 echo ========================================================
