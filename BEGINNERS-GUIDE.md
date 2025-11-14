@@ -1,147 +1,276 @@
-# 🌟 SUPER EASY GUIDE - Fix Your Slow PC in 2 Minutes!
+# 🌟 Deep Clean Pro – Beginner’s Guide
 
-## 😊 For People Who "Aren't Good With Computers"
+### **The FREE Windows optimizer that actually works**
 
-**Good news! You don't need to be a tech expert. Just follow these baby steps:**
+Welcome!
+This guide explains everything in **simple, beginner-friendly steps**—no tech knowledge required.
+
+If your PC feels slow, full of junk, full of Microsoft bloat, or just needs a good tune-up, **Deep Clean Pro** is the easiest and safest way to fix it.
 
 ---
 
-## Option 1: The EASIEST Way (Just Copy & Paste!)
+# 🚀 1. One-Click Installation (Easiest Method)
 
-### Step 1: Open the Right Program
-1. Press the **Windows key** on your keyboard (it has the Windows logo)
-2. Type: **powershell**
-3. You'll see **"Windows PowerShell"** appear
-4. **RIGHT-CLICK** on it
-5. Click **"Run as administrator"**
-6. Click **"Yes"** when Windows asks
+**Step 1 — Open PowerShell as Administrator**
 
-### Step 2: Copy This Magic Line
-Select and copy this entire line (Ctrl+C):
-```
+1. Press **Windows Key**
+2. Type **PowerShell**
+3. Right-click **Windows PowerShell**
+4. Click **Run as Administrator**
+
+You MUST run as admin or Deep Clean Pro will not work.
+
+---
+
+### **Step 2 — Copy & Paste this command into PowerShell**
+
+```powershell
 irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex
 ```
 
-### Step 3: Paste and Run
-1. Right-click in the PowerShell window
-2. The line will paste automatically
-3. Press **Enter**
-4. **That's it! Your PC is being fixed!** 🎉
+✔ No downloads
+✔ No installation
+✔ No files needed
+✔ Starts optimizing immediately
+
+After running, you’ll see:
+
+* System health checks
+* Cleaning temporary files
+* Removing bloatware
+* Optimizing services
+* Improving performance
+* Defragmentation (optional)
+* Summary of changes
+* Restart prompt
 
 ---
 
-## Option 2: Download Ready-Made Shortcuts (Even EASIER!)
+# 🖥️ 2. Ready-Made Desktop Shortcuts (Recommended for Beginners)
 
-### What You Get:
-We've made special shortcuts that work like any program:
+Don’t want to paste commands?
+Just download pre-made shortcuts with icons!
 
-📁 **Download These Files:**
-- 🚀 **Quick-Fix.bat** - Makes your PC faster in 5 minutes
-- 🎮 **Gaming-Mode.bat** - Makes games run better
-- 🧪 **Test-Mode.bat** - Shows what will happen (safe to try first!)
+### **📥 Download Shortcut Pack**
 
-### How to Use:
-1. Download the shortcuts (they're like program icons)
-2. Double-click the one you want
-3. Click "Yes" when Windows asks
-4. Watch your PC get faster!
+👉 [https://github.com/iSystemDevelopment/deep-clean-pro/releases/latest/download/DeepClean-Shortcuts.zip](https://github.com/iSystemDevelopment/deep-clean-pro/releases/latest/download/DeepClean-Shortcuts.zip)
 
----
+This ZIP includes ready-to-use desktop shortcuts:
 
-## 🤔 Common Questions from Beginners
+| Shortcut                 | Purpose                                    |
+| ------------------------ | ------------------------------------------ |
+| 🚀 **Quick Fix**         | Safe 5-minute cleanup, no reboot           |
+| 🎮 **Gaming Mode**       | Boost FPS, reduce lag                      |
+| 💻 **Dev Mode**          | For programmers & IDE performance          |
+| 🎵 **Music Mode**        | For low-latency audio production           |
+| 📹 **Video Mode**        | For editing & rendering workloads          |
+| 💼 **Office Mode**       | Balanced daily-use tuning                  |
+| 🧪 **Test Mode**         | Try changes **without modifying anything** |
+| 🔥 **Full Optimization** | Deepest cleaning & full system overhaul    |
 
-### "Will this break my computer?"
-**No!** It has safety features:
-- Creates backups automatically
-- Has a test mode to preview changes
-- Used by thousands of people safely
+### How to use:
 
-### "Is this a virus?"
-**No!** It's 100% safe:
-- You can see all the code (it's "open source")
-- No hidden stuff
-- Made by the community to help people
+1. Download the ZIP
+2. Extract it
+3. Run **Install-Shortcuts.bat**
+4. All shortcuts are added to your Desktop automatically
+5. Double-click any shortcut to run Deep Clean Pro
 
-### "What if something goes wrong?"
-- All changes are backed up
-- You can undo everything
-- There's a test mode to try first
+Each shortcut automatically:
 
-### "Do I need to pay?"
-**NEVER!** It's 100% free forever. No trial, no premium version, no credit card.
+* Runs as Administrator
+* Loads the correct profile
+* Applies safe defaults
+* Uses a custom icon
+* Opens in silent mode
 
 ---
 
-## 🎯 What Does Each Mode Do?
+# ☁️ 3. OneDrive Liberator (Optional Only if You Want to Remove OneDrive)
 
-### 🚀 Quick Fix Mode
-**For:** Everyone!  
-**Time:** 5 minutes  
-**Does:** Basic cleanup that makes your PC faster  
+If you want to **completely remove OneDrive**, free system resources, and move your files **back to local storage**, the shortcut pack includes:
 
-### 🎮 Gaming Mode
-**For:** People who play games  
-**Time:** 10 minutes  
-**Does:** Makes games run smoother, less lag  
+### **☁️ Deep Clean – OneDrive Liberator**
 
-### 💻 Developer Mode
-**For:** Programmers  
-**Time:** 10 minutes  
-**Does:** Optimizes for coding tools  
+This tool:
 
-### 🧪 Test Mode
-**For:** Nervous first-timers  
-**Time:** 2 minutes  
-**Does:** Shows what would change WITHOUT actually changing anything  
+* Moves your OneDrive files to a local backup folder
+* Moves Desktop/Documents/Pictures out of OneDrive
+* Uninstalls OneDrive completely
+* Removes Explorer integration
+* Deletes OneDrive leftovers
+* Blocks Microsoft from reinstalling it
 
----
+### Your files remain safe!
 
-## 🚨 If You Get Stuck
+They are saved in:
 
-### Error: "cannot be loaded because running scripts is disabled"
-**Fix:** First run this line:
 ```
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+C:\Users\<YourName>\Documents\OneDrive-Backup-YYYY-MM-DD
 ```
-Then try again!
 
-### Error: "Access is denied"
-**Fix:** Make sure you right-clicked and chose "Run as administrator"
+⚠️ Warning:
+**This is permanent.**
+OneDrive sync is removed but your files remain.
 
-### Still confused?
-1. Try the Test Mode first (it can't break anything)
-2. Ask a tech-savvy friend to help
-3. Watch a YouTube tutorial (search "Deep Clean Pro")
+For most users, this is optional.
 
 ---
 
-## 🎉 Success! What Now?
+# 🛠️ 4. What Each Optimization Mode Does
 
-After running Deep Clean Pro:
-- ✅ Your PC will be faster
-- ✅ Games will run better
-- ✅ Less junk files
-- ✅ No more bloatware
+Deep Clean Pro includes built-in **profiles** for different types of users.
 
-**Run it once a month to keep your PC fast!**
+### 🎮 Gaming Profile
+
+Best for gamers:
+
+* Disables Game Bar & DVR
+* Prioritizes GPU performance
+* Reduces input lag
+* Reduces system background noise
+
+### 💻 Development Profile
+
+For programmers:
+
+* Enables long paths
+* Adds Defender exclusions
+* Optimizes for Visual Studio, VS Code, JetBrains
+* Maintains power stability
+
+### 🎵 Music Production Profile
+
+For DAW users (FL Studio, Ableton, etc.):
+
+* Disables audio enhancements
+* Reduces latency
+* Optimizes USB & CPU timing
+
+### 📹 Video Editing Profile
+
+For Premiere, DaVinci Resolve, etc.:
+
+* Increases GPU timeout
+* Optimizes RAM usage
+* Tunes disk caching
+
+### 💼 Office Profile
+
+Perfect for everyday users:
+
+* Balanced performance
+* Stable power management
+* Faster boot
+* Removes distractions
+
+### 🚀 Quick Fix (fast & safe)
+
+* Cleans junk
+* Fixes temporary issues
+* Removes some bloat
+* Takes 5 minutes
+* **No reboot required**
+
+### 🔥 Full Optimization (complete overhaul)
+
+Everything Deep Clean Pro can do:
+
+* System health
+* Bloatware removal
+* Deep cleaning
+* Registry tuning
+* Service tuning
+* Defrag
+* Optional Windows Update maintenance
+* Summary
+* **Restart strongly recommended**
 
 ---
 
-## 💝 Help Your Friends!
+# 🔧 5. For Beginners: What Happens After You Run It?
 
-Know someone with a slow PC? Share this with them!
+When Deep Clean Pro starts, it will:
 
-**Just tell them:**
-> "I found this free tool that actually fixes slow PCs. It's called Deep Clean Pro and it's 100% free. No scams, no payment, just works!"
+### ✔ Run system health check
+
+Shows errors, missing updates, disk health, etc.
+
+### ✔ Clean temporary files
+
+GBs of junk usually removed.
+
+### ✔ Remove bloatware
+
+Unused Microsoft apps & adware.
+
+### ✔ Optimize Windows services
+
+Disable telemetry, reduce background noise.
+
+### ✔ Improve system performance
+
+Memory tweaks, visual settings, responsiveness.
+
+### ✔ Tune for your chosen profile
+
+(If launched through a shortcut)
+
+### ✔ Optional Windows Update maintenance
+
+Full mode: asks “Run updates? Y/N”
+Quick mode: defaults to **No**
+
+### ✔ Defragment/OPTIMIZE your drive
+
+Only on HDD/Hybrid (safe and recommended).
+
+### ✔ Provide a clear summary of what was done
+
+### ✔ Ask to restart
+
+You can choose **Y/N**.
 
 ---
 
-## 📞 Still Need Help?
+# 💡 6. Troubleshooting (Beginner-Friendly)
 
-- Check the main guide: [Full Documentation](README.md)
-- Ask in discussions: [Get Help](https://github.com/Dr-Diodac/deep-clean-pro/discussions)
-- Report problems: [Report Issue](https://github.com/Dr-Diodac/deep-clean-pro/issues)
+### ❗ “Cannot run scripts”
+
+Run this:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force
+```
+
+### ❗ “Access denied”
+
+Run PowerShell as Administrator.
+
+### ❗ PowerShell window closes instantly
+
+Run via **shortcut pack**, not double-clicking `.ps1`.
+
+### ❗ Nothing happens after clicking shortcut
+
+* Right-click → **Run as Administrator**
+* Or re-run the installer:
+  `Install-Shortcuts.bat`
 
 ---
 
-**Remember:** You don't need to be a computer expert! Just follow the steps and your PC will be faster! 🚀
+# 💬 7. Where to Get Help
+
+If you need help:
+
+* 🐛 Report issues:
+  [https://github.com/iSystemDevelopment/deep-clean-pro/issues](https://github.com/iSystemDevelopment/deep-clean-pro/issues)
+
+* 💡 Suggest features:
+  [https://github.com/iSystemDevelopment/deep-clean-pro/discussions](https://github.com/iSystemDevelopment/deep-clean-pro/discussions)
+
+* ⭐ Star the project if it helped you!
+
+---
+
+# 🎉 You're Done!
