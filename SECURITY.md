@@ -13,18 +13,18 @@ This document explains:
 * How users can protect themselves
 * Future security improvements
 
----
+---text
 
 # ✔️ **Supported Versions**
 
 We provide security updates and patches for:
 
-| Version   | Supported       | Notes                                |
-| --------- | --------------- | ------------------------------------ |
-| **2.2.x** | ✅ Active       | Current stable series                |
-| **2.1.x** | ⏳ Partial      | Security fixes only until June 2025  |
-| **2.0.x** | ⚠️ Limited      | Only critical fixes until March 2025 |
-| **< 2.0** | ❌ Unsupported  | Upgrade required                     |
+| Version   | Supported         | Notes                               |
+| --------- | ----------------  | ----------------------------------- |
+| **2.2.x** | ✅ Active        | Current stable series                |
+| **2.1.x** | ⏳ Partial       | Security fixes only until June 2025  |
+| **2.0.x** | ⚠️ Limited       | Only critical fixes until March 2025 |
+| **< 2.0** | ❌ Unsupported   | Upgrade required                     |
 
 ---
 
