@@ -1,298 +1,322 @@
-# 🚀 Deep Clean Pro - FREE Windows Optimization That Works!
+# 🚀 **Deep Clean Pro**
+
+### **The FREE Windows Optimization Suite that Actually Works**
+
+**Fast. Safe. Open-source. No ads. No “Pro” version. No BS.**
 
 <div align="center">
 
-[![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](https://github.com/Dr-Diodac/deep-clean-pro/releases)
-[![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue.svg)](https://github.com/PowerShell/PowerShell)
-[![Windows](https://img.shields.io/badge/Windows-10%2B-blue.svg)](https://www.microsoft.com/windows)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![100% Free](https://img.shields.io/badge/Price-FREE_FOREVER-brightgreen.svg)](#)
-
-**Stop paying for "optimization" software that doesn't work!**  
-**Deep Clean Pro is 100% FREE, open-source, and actually fixes your PC!**
-
-[🎮 Gaming PC](#-gaming-pc) • [💻 Dev PC](#-development-pc) • [🎵 Music PC](#-music-production-pc) • [📹 Video PC](#-video-editing-pc) • [💼 Office PC](#-office-pc)
+![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)
+![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-blue.svg)
+![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Free Forever](https://img.shields.io/badge/Price-FREE-brightgreen)
 
 </div>
 
 ---
 
-## 🎯 Why Deep Clean Pro?
+# 📌 **What Is Deep Clean Pro?**
 
-Are you tired of:
-- 💸 **Expensive "cleaners"** that do nothing? (CCleaner, IObit, etc.)
-- 🐌 **Slow PC** that gets worse over time?
-- 🎮 **Games lagging** when they shouldn't?
-- 💾 **Bloatware** you can't remove?
-- 🔄 **Windows Updates** breaking things?
+Deep Clean Pro is a **complete Windows optimization engine** designed for:
 
-**Deep Clean Pro is the answer - and it's COMPLETELY FREE!**
+* Gamers 🎮
+* Developers 💻
+* Music producers 🎵
+* Video editors 📹
+* Office & productivity users 💼
+* Technicians & sysadmins 🛠️
+* Everyday users who want a **faster PC** 🚀
 
-## 🚨 For Beginners - Super Easy Installation!
+Built with **safety-first** design:
 
-### ✨ One-Click Install (Easiest!)
+* Automatic backups
+* Full WhatIf simulation
+* Service + registry rollback
+* Windows Update maintenance
+* Profiles for different workloads
+* Logging for all changes
 
-Just copy and paste this into PowerShell (Run as Administrator):
+**No telemetry. No ads. No trackers. No paywalls.**
+
+---
+
+# ⭐ **1. One-Click Installation (Fastest Method)**
+
+## 💡 Step 1 — Run PowerShell as Administrator
+
+1. Press **Windows Key**
+2. Type **PowerShell**
+3. Right-click **Windows PowerShell**
+4. Click **Run as Administrator**
+
+## 💡 Step 2 — Paste this command
 
 ```powershell
-irm 'https://gist.githubusercontent.com/Dr-Diodac/25787f26b3506573bd4df4c42d1ffce7/raw/DeepCleanPro-Launcher.ps1' | iex
+irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex
 ```
 
-**That's it! The script will optimize your PC automatically!**
+✔ No downloads
+✔ No installation
+✔ Runs directly from GitHub
+✔ Fully safe & open-source
 
-### 📖 Step-by-Step for Complete Beginners
+---
 
-1. **Open PowerShell as Administrator:**
-   - Press `Windows Key + X`
-   - Click "Windows PowerShell (Admin)" or "Terminal (Admin)"
-   - Click "Yes" when asked
+# 🖱️ **2. Download Shortcut Pack (Easiest for Most Users)**
 
-2. **Copy this command:**
-   ```powershell
-   irm 'https://gist.githubusercontent.com/Dr-Diodac/25787f26b3506573bd4df4c42d1ffce7/raw/DeepCleanPro-Launcher.ps1' | iex
-   ```
+Don’t want to use commands?
+Download the pre-made shortcuts:
 
-3. **Paste it** (Right-click in PowerShell)
+### 📥 **Download All Shortcuts**
 
-4. **Press Enter**
+👉 [https://github.com/iSystemDevelopment/deep-clean-pro/releases/latest/download/DeepClean-Shortcuts.zip](https://github.com/iSystemDevelopment/deep-clean-pro/releases/latest/download/DeepClean-Shortcuts.zip)
 
-5. **Done!** Your PC is being optimized!
+Includes:
 
-### 💾 Download Ready-Made Shortcuts
+| Shortcut              | Purpose                               |
+| --------------------- | ------------------------------------- |
+| 🚀 Quick Fix          | 5-minute cleanup                      |
+| 🎮 Gaming Mode        | Maximum FPS & reduced lag             |
+| 💻 Dev Mode           | Boosts coding tools & build time      |
+| 🎵 Music Mode         | Low-latency audio production          |
+| 📹 Video Mode         | Smooth editing & rendering            |
+| 💼 Office Mode        | Stable productivity profile           |
+| 🧪 Test Mode          | Preview changes with no risk          |
+| 🔥 Full Optimization  | Deepest cleanup (recommended monthly) |
+| ☁️ OneDrive Liberator | Remove OneDrive safely & permanently  |
 
-Don't want to use commands? Download these ready-to-use shortcuts:
+All shortcuts automatically:
 
-[📥 Download All Shortcuts Pack](https://github.com/Dr-Diodac/deep-clean-pro/releases/latest/download/DeepClean-Shortcuts.zip)
+* Run as administrator
+* Load the correct profile
+* Use custom icons
+* Apply safe defaults
 
-Just extract and double-click the shortcut you need:
-- 🚀 **Deep Clean - Quick Fix.lnk** (5 minutes, safe)
-- 🎮 **Deep Clean - Gaming Mode.lnk** (optimizes for games)
-- 💻 **Deep Clean - Dev Mode.lnk** (for programmers)
-- 🎵 **Deep Clean - Music Mode.lnk** (for music production)
-- 📹 **Deep Clean - Video Mode.lnk** (for video editing)
-- 🧪 **Deep Clean - Test Mode.lnk** (preview changes, no modifications)
+Run `Install-Shortcuts.bat` to add them to your Desktop.
 
-## 🎯 Choose Your PC Type - Specialized Optimization!
+---
 
-### 🎮 Gaming PC
-Removes lag, increases FPS, optimizes for gaming performance:
-```powershell
-irm 'https://gist.githubusercontent.com/Dr-Diodac/25787f26b3506573bd4df4c42d1ffce7/raw/DeepCleanPro-Launcher.ps1' | iex; DeepCleanPro.ps1 -Profile Gaming
+# ⚙️ **3. Features & Capabilities**
+
+## ✔ Complete Optimization Engine
+
+* System health diagnostics
+* Windows Update maintenance (optional)
+* Deep cleaning of temporary files
+* Registry performance tweaks
+* Service optimization (CIM-safe implementation)
+* Disk optimization & defragmentation
+* Startup program analysis
+* Search index rebuild
+* Driver update checks
+* GPO policy fixes (optional)
+
+## ✔ Profiles for Every PC Type
+
+* 🎮 **Gaming** — FPS boost, low-latency, GPU tuning
+* 💻 **Development** — VS Code, JetBrains, Node, Python optimizations
+* 🎵 **Music** — DPC latency, USB/audio tweaks
+* 📹 **Video Editing** — file cache tuning, GPU timeouts
+* 💼 **Office** — balanced, low-noise, fast startup
+* 🚀 **Quick Fix** — safe 5-minute run
+* 🔥 **Full Optimization** — deepest cleanup
+
+## ✔ Safety Features
+
+* Automatic registry backups
+* Service configuration backups
+* Built-in WhatIf mode
+* Logging of all actions
+* Rollback-friendly design
+
+---
+
+# ☁️ **4. OneDrive Liberator (Optional)**
+
+Want to remove OneDrive completely?
+Deep Clean Pro includes **OneDrive Liberator**, which:
+
+* Moves ALL your OneDrive files to a local backup folder
+* Restores Desktop/Documents/Pictures to LOCAL folders
+* Uninstalls OneDrive fully
+* Removes Explorer sidebar
+* Deletes leftovers & cache
+* Blocks Microsoft from reinstalling it
+* Prompts for restart
+
+Your files remain safe here:
+
+```
+C:\Users\<YourName>\Documents\OneDrive-Backup-YYYY-MM-DD
 ```
 
-**What it does:**
-- ✅ Disables Xbox Game Bar & DVR
-- ✅ Sets High Performance power plan
-- ✅ Optimizes GPU scheduling
-- ✅ Removes gaming-related bloatware
-- ✅ Fixes fullscreen optimizations
+Run via shortcut or:
 
-### 💻 Development PC
-Perfect for programmers and developers:
 ```powershell
-irm 'https://gist.githubusercontent.com/Dr-Diodac/25787f26b3506573bd4df4c42d1ffce7/raw/DeepCleanPro-Launcher.ps1' | iex; DeepCleanPro.ps1 -Profile Development
+.\OneDriveNuke.ps1
 ```
 
-**What it does:**
-- ✅ Enables long path support
-- ✅ Adds Defender exclusions for dev folders
-- ✅ Enables Developer Mode
-- ✅ Optimizes for IDEs and compilers
-- ✅ Cleans package caches
+---
 
-### 🎵 Music Production PC
-For DAWs and audio production:
+# 🧠 **5. Advanced Usage**
+
+## Run with parameters
+
 ```powershell
-irm 'https://gist.githubusercontent.com/Dr-Diodac/25787f26b3506573bd4df4c42d1ffce7/raw/DeepCleanPro-Launcher.ps1' | iex; DeepCleanPro.ps1 -Profile Music
+.\DeepCleanPro.ps1 -Profile Gaming -QuickMode -NoReboot
 ```
 
-**What it does:**
-- ✅ Disables system sounds
-- ✅ Optimizes for low latency
-- ✅ Disables audio "enhancements"
-- ✅ Optimizes USB for audio interfaces
-- ✅ Sets performance power plan
+## Run from internet with parameters
 
-### 📹 Video Editing PC
-For video editors and content creators:
 ```powershell
-irm 'https://gist.githubusercontent.com/Dr-Diodac/25787f26b3506573bd4df4c42d1ffce7/raw/DeepCleanPro-Launcher.ps1' | iex; DeepCleanPro.ps1 -Profile Video
+$env:DCP_PROFILE='Gaming'
+irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex
 ```
 
-**What it does:**
-- ✅ Increases GPU timeout for rendering
-- ✅ Optimizes disk caching for large files
-- ✅ Sets high performance mode
-- ✅ Optimizes memory for large projects
+## Invoke full Windows Update maintenance
 
-### 💼 Office PC
-For everyday work and productivity:
 ```powershell
-irm 'https://gist.githubusercontent.com/Dr-Diodac/25787f26b3506573bd4df4c42d1ffce7/raw/DeepCleanPro-Launcher.ps1' | iex; DeepCleanPro.ps1 -Profile Office
+.\DeepCleanPro.ps1 -RunWindowsUpdates
 ```
 
-**What it does:**
-- ✅ Balanced optimization
-- ✅ Battery optimization for laptops
-- ✅ Fast startup
-- ✅ Removes distracting bloatware
+## Simulate everything (no changes)
 
-## 🔥 What Deep Clean Pro Actually Does
-
-### 🧹 Removes Bloatware
-- Xbox apps you never use
-- Cortana and other annoyances
-- Pre-installed garbage apps
-- Hidden telemetry services
-
-### ⚡ Speeds Up Your PC
-- Cleans temp files (GBs of junk!)
-- Optimizes startup programs
-- Fixes registry issues
-- Defragments drives
-
-### 🛡️ Improves Privacy
-- Disables telemetry
-- Stops tracking services
-- Removes keyloggers
-- Blocks ads in Windows
-
-### 🎮 Gaming Optimizations
-- Disables Game Bar
-- Optimizes GPU settings
-- Reduces input lag
-- Increases FPS
-
-### 🔧 Fixes Common Issues
-- Slow boot times
-- High disk usage
-- Memory leaks
-- Windows Search problems
-
-## 🎛️ Advanced Users
-
-### Full Installation
 ```powershell
-# Clone repository
-git clone https://github.com/Dr-Diodac/deep-clean-pro.git
-cd deep-clean-pro
-
-# Run deployment
-.\DEPLOY.ps1
-
-# Run with specific profile
-.\DeepCleanPro.ps1 -Profile Gaming -QuickMode
-
-# Schedule weekly cleanup
-.\DeepCleanPro.ps1 -Profile Gaming -CreateScheduledTask
-```
-
-### Command Line Options
-```powershell
-# Test mode - see what would change without making changes
 .\DeepCleanPro.ps1 -WhatIf
-
-# Quick mode - essential fixes only (5 minutes)
-.\DeepCleanPro.ps1 -QuickMode
-
-# Full deep clean with gaming optimization
-.\DeepCleanPro.ps1 -Profile Gaming
-
-# Fix Windows policies
-.\DeepCleanPro.ps1 -FixPolicies
-
-# No automatic reboot
-.\DeepCleanPro.ps1 -NoReboot
-
-# Custom combination
-.\DeepCleanPro.ps1 -Profile Development -QuickMode -NoReboot
 ```
-
-### Creating Custom Shortcuts
-
-Save this as `Gaming-Mode.bat`:
-```batch
-@echo off
-PowerShell -NoProfile -ExecutionPolicy Bypass -Command "& {irm 'https://gist.githubusercontent.com/Dr-Diodac/25787f26b3506573bd4df4c42d1ffce7/raw/DeepCleanPro-Launcher.ps1' | iex; DeepCleanPro.ps1 -Profile Gaming}"
-pause
-```
-
-## ❓ FAQ for Beginners
-
-**Q: Is this really free?**  
-A: Yes! 100% free forever. No ads, no premium version, no BS.
-
-**Q: Is it safe?**  
-A: Absolutely! It's open-source, you can see all the code. Plus it has a test mode.
-
-**Q: Will it break my PC?**  
-A: No! It creates backups and has a WhatIf mode to preview changes.
-
-**Q: How often should I run it?**  
-A: Once a month for maintenance, or whenever your PC feels slow.
-
-**Q: Can I undo changes?**  
-A: Yes! All changes are backed up and can be restored.
-
-**Q: Does it work on Windows 11?**  
-A: Yes! Works on Windows 10 and 11.
-
-## 💡 Troubleshooting
-
-### "Cannot run scripts" Error
-Run this first:
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
-```
-
-### "Not recognized" Error
-You might have an older PowerShell. Update it:
-```powershell
-winget install Microsoft.PowerShell
-```
-
-### "Access Denied"
-Make sure you're running as Administrator (right-click → Run as Administrator)
-
-## 🤝 Contributing
-
-Found a bug? Have an idea? Want to help?
-- 🐛 [Report Issues](https://github.com/Dr-Diodac/deep-clean-pro/issues)
-- 💡 [Suggest Features](https://github.com/Dr-Diodac/deep-clean-pro/discussions)
-- 🔧 [Submit Fixes](https://github.com/Dr-Diodac/deep-clean-pro/pulls)
-
-## 📊 Success Stories
-
-> "My 5-year-old laptop feels brand new! Games that were unplayable now run smooth!" - Reddit User
-
-> "Finally, something that actually works and doesn't cost $49.99/year!" - Twitter User
-
-> "As a developer, the Development profile is perfect. Saved me hours of manual setup!" - GitHub User
-
-## 🎁 Spread the Word!
-
-If Deep Clean Pro helped you, please:
-- ⭐ Star this repository
-- 🔄 Share with friends who have slow PCs
-- 💬 Tell people to stop paying for fake optimization software!
-
-## ⚖️ License
-
-MIT License - Use it, modify it, share it! It's FREE for everyone!
-
-## 🙏 Credits
-
-Created by Dr-Diodac and the community. Special thanks to everyone who contributed!
 
 ---
 
-<div align="center">
+# 🧩 **6. For Power Users & Technicians**
 
-### 🚀 Stop Paying - Start Optimizing!
+Deep Clean Pro supports:
 
-**Remember: You don't need expensive software to fix your PC!**  
-**Deep Clean Pro is FREE and always will be!**
+### ✔ Parallel job execution
 
-[⬆ Back to Top](#-deep-clean-pro---free-windows-optimization-that-actually-works)
+### ✔ Custom modules (Extensions/*.ps1)
 
-</div>
+### ✔ Custom profiles
+
+### ✔ Remote execution via PowerShell Remoting
+
+### ✔ Local or domain deployment
+
+### ✔ SCCM / Intune packaging
+
+### ✔ Group Policy startup scripts
+
+### ✔ Compliance reporting
+
+See **ADVANCED-GUIDE.md** for full details.
+
+---
+
+# 🏢 **7. Light Enterprise Deployment**
+
+### ✔ Group Policy Startup Script
+
+```powershell
+if (Test-NetConnection github.com -Port 443 -Quiet) {
+    Start-Process powershell.exe -WindowStyle Hidden -ArgumentList "-ExecutionPolicy Bypass -Command `"irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex`""
+}
+```
+
+### ✔ Intune / SCCM Package
+
+```xml
+<CommandLine>
+  powershell.exe -ExecutionPolicy Bypass -File DeepCleanPro.ps1 -Profile Office -QuickMode
+</CommandLine>
+```
+
+### ✔ Domain-Wide Execution
+
+```powershell
+$computers = Get-ADComputer -Filter * | Select Name
+Invoke-Command -ComputerName $computers.Name -ScriptBlock {
+    & "C:\DeepCleanPro\DeepCleanPro.ps1" -Profile Office -QuickMode
+}
+```
+
+---
+
+# 🧪 **8. Testing & Validation**
+
+### Validate system compatibility
+
+```powershell
+C:\DeepCleanPro\Scripts\VALIDATE.ps1
+```
+
+### Run unit tests
+
+```powershell
+Invoke-Pester -Path .\Tests\
+```
+
+---
+
+# 🔒 **9. Security**
+
+Deep Clean Pro implements:
+
+* TLS 1.2 enforced
+* Script integrity validation (optional module)
+* Strict WhatIf support
+* No remote code execution except installer
+* No telemetry, no analytics, no data sent anywhere
+* Full transparency (open-source MIT)
+
+Report security issues privately:
+📧 **[security@isystem.app](mailto:security@isystem.app)**
+
+---
+
+# 🤝 **10. Contributing**
+
+We welcome PRs!
+
+* Follow the style guidelines
+* Include tests for new features
+* Document changes
+* Submit PRs via GitHub
+
+See **CONTRIBUTING.md**.
+
+---
+
+# 📚 **11. Documentation**
+
+* **Beginner Guide** – simple, non-technical
+* **Advanced Guide** – power users + enterprise
+* **Security Policy** – vulnerability reporting
+* **Wiki** – troubleshooting, FAQs, more
+
+---
+
+# ⭐ **12. Support the Project**
+
+If Deep Clean Pro helped you:
+
+* ⭐ Star the repository
+* 🫶 Share it with friends
+* 🐛 Report bugs
+* 💡 Suggest features
+* 🔧 Contribute improvements
+
+**Your support keeps it free for everyone.**
+
+---
+
+# 🏁 **13. License**
+
+MIT License — free to use, modify, and distribute.
+
+---
+
+# 🎉 **Enjoy Your Faster PC!**
+
+Deep Clean Pro exists for one reason:
+
+> **Because you shouldn’t have to pay for software that simply makes your PC fast again.**
