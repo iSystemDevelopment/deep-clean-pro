@@ -1,132 +1,343 @@
-# 🔧 ADVANCED USER GUIDE - Deep Clean Pro v2.2.0
+# 🔧 ADVANCED USER GUIDE
 
-## 📊 Technical Overview
+### Deep Clean Pro — Power User & Hybrid Enterprise Edition
 
-Deep Clean Pro is a PowerShell-based Windows optimization framework with profile-based optimization strategies, comprehensive testing suite, and CI/CD integration.
+This guide is for **power users**, **technicians**, **admins**, and anyone who wants to go deeper than the basic shortcuts and beginner instructions.
 
-### Architecture
+If you are looking for one-click shortcuts or simple instructions, read the **BEGINNERS-GUIDE.md** instead.
+
+---
+
+# 📐 1. Technical Overview of Deep Clean Pro
+
+Deep Clean Pro is a **modular PowerShell optimization engine** with:
+
+* Profile-based optimization
+* Safety system (WhatIf, ShouldProcess, backups)
+* Service tuning
+* Registry tuning
+* Windows Update maintenance
+* Logging & recovery
+* Policy enforcement
+* Expansion module support
+* Optional enterprise deployment tools
+
+### 🧱 Architecture
+
 ```
-┌─────────────────────────────────────────┐
-│         User Interface Layer            │
-│  (CLI / Shortcuts / Scheduled Tasks)    │
-└────────────┬────────────────────────────┘
-             │
-┌────────────▼────────────────────────────┐
-│         Core Optimization Engine        │
-│    (DeepCleanPro.ps1 - Main Script)     │
-├─────────────────────────────────────────┤
-│  • Profile Manager (Gaming/Dev/Music)   │
-│  • Backup System (Registry/Services)    │
-│  • Safety Layer (WhatIf/ShouldProcess)  │
-└────────────┬────────────────────────────┘
-             │
-┌────────────▼────────────────────────────┐
-│      System Modification Layer          │
-│   (Registry / Services / Files / GPO)   │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│           User Interface Layer              │
+│   (Shortcuts / CLI / Scheduled Tasks)       │
+└───────────────────────┬─────────────────────┘
+                        │
+┌───────────────────────▼─────────────────────┐
+│          Core Optimization Engine           │
+│           DeepCleanPro.ps1 (v2.2+)          │
+│                                             │
+│  • Profile Manager (Gaming/Dev/Music…)      │
+│  • Backup System (services, registry, etc.) │
+│  • Safety Layer (WhatIf, rollback)          │
+│  • Windows Update Maintenance Module        │
+└───────────────────────┬─────────────────────┘
+                        │
+┌───────────────────────▼─────────────────────┐
+│      System Modification Layer              │
+│   (Services, Registry, Filesystem, GPO)     │
+└─────────────────────────────────────────────┘
 ```
 
-## 🎯 Profile-Based Optimization
+---
 
-### Gaming Profile
+# 🎛️ 2. Advanced Profile-Based Optimization
+
+Each profile is designed with **specific workloads** in mind.
+All profiles can be triggered either via CLI or via desktop shortcuts.
+
+You can also use:
+
 ```powershell
-.\DeepCleanPro.ps1 -Profile Gaming [-QuickMode] [-NoReboot]
+$env:DCP_PROFILE = 'Gaming'
+irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex
 ```
 
-**Technical Changes:**
-- `HKCU:\System\GameConfigStore` → GameDVR_Enabled = 0
-- `HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers` → HwSchMode = 2
-- Power Plan → 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c (High Performance)
-- Fullscreen Optimizations → Disabled
-- WDDM GPU Scheduling → Hardware Accelerated
+Profiles override the default “Balanced” mode.
 
-### Development Profile
+---
+
+## 🎮 Gaming Profile
+
 ```powershell
-.\DeepCleanPro.ps1 -Profile Development [-QuickMode]
+.\DeepCleanPro.ps1 -Profile Gaming
 ```
 
-**Technical Changes:**
-- `HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem` → LongPathsEnabled = 1
-- `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock` → AllowDevelopmentWithoutDevLicense = 1
-- Windows Defender Exclusions:
-  - `%USERPROFILE%\source`
-  - `%USERPROFILE%\projects`
-  - `%USERPROFILE%\.npm`
-  - `%USERPROFILE%\.nuget`
-  - Node.js and Python paths
+### Technical Changes
 
-### Music Production Profile
+* Disable Xbox Game Bar / DVR
+* Disable Game Mode fullscreen optimizations
+* Enable HW accelerated GPU scheduling (`HwSchMode=2`)
+* Set high-performance power plan
+* Reduce input latency
+* Optimize GPU timeout behavior
+
+---
+
+## 💻 Development Profile
+
+```powershell
+.\DeepCleanPro.ps1 -Profile Development
+```
+
+### Technical Changes
+
+* Enable long path support
+* Enable Developer Mode
+* Add Defender exclusions for:
+
+  * `%USERPROFILE%\source`
+  * `%USERPROFILE%\projects`
+  * `%USERPROFILE%\.npm`
+  * `%USERPROFILE%\.nuget`
+  * Node.js + Python
+* Improve disk and indexing performance for coding workflows
+
+---
+
+## 🎵 Music Production Profile
+
 ```powershell
 .\DeepCleanPro.ps1 -Profile Music
 ```
 
-**Technical Changes:**
-- `HKCU:\AppEvents\Schemes` → (Default) = ".None"
-- USB Selective Suspend → Disabled
-- Audio Enhancements → Disabled via FxProperties
-- DPC Latency optimizations
-- MMCSS Priority → High
+### Technical Changes
 
-### Video Editing Profile
+* Disable system sounds
+* Reduce DPC latency
+* Disable audio “enhancements” (FxProperties)
+* Optimize USB selective suspend
+* Set performance power plan
+
+---
+
+## 📹 Video Editing Profile
+
 ```powershell
 .\DeepCleanPro.ps1 -Profile Video
 ```
 
-**Technical Changes:**
-- `HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers` → TdrDelay = 60
-- File System Cache → memoryusage = 2
-- Disable Last Access timestamps
-- Large File Transfer optimizations
+### Technical Changes
 
-## 🛠️ Advanced Installation Methods
+* Increase GPU rendering timeout (TdrDelay = 60)
+* Optimize disk caching for large media operations
+* Disable last access timestamps
+* Improve RAM usage for encoding workloads
 
-### Method 1: Git with Specific Branch
+---
+
+## 💼 Office Profile
+
 ```powershell
-git clone -b development https://github.com/iSystemDevelopment/deep-clean-pro.git
-cd deep-clean-pro
-.\DEPLOY.ps1 -TargetPath "C:\Tools\DCP" -CreateScheduledTask -NonInteractive
+.\DeepCleanPro.ps1 -Profile Office
 ```
 
-### Method 2: Direct Script Execution with Parameters
+### Technical Changes
+
+* Balanced performance power plan
+* Battery and standby optimizations
+* Fast Startup enabled
+* Removes distractive bloatware
+
+---
+
+# ⚙️ 3. Advanced Control via Parameters
+
+Every feature in Deep Clean Pro is available through parameters:
+
+```powershell
+.\DeepCleanPro.ps1 -Profile Gaming -QuickMode -NoReboot
+```
+
+### Core Parameters
+
+| Parameter     | Description                                         |
+| ------------- | --------------------------------------------------- |
+| `-Profile`    | Gaming, Development, Music, Video, Office, Balanced |
+| `-QuickMode`  | Skip heavy tasks (defrag, update cleanup)           |
+| `-WhatIf`     | Simulation mode (no changes applied)                |
+| `-NoReboot`   | Don’t ask for reboot                                |
+| `-AutoReboot` | Reboot automatically at end                         |
+| `-SkipHealth` | Skip initial system health check                    |
+| `-SkipDefrag` | Disable disk optimization step                      |
+
+---
+
+# 🔄 4. Windows Update Maintenance (Advanced)
+
+Starting with v2.2.x, Deep Clean Pro includes:
+
+### ✔ Update Detection
+
+### ✔ Update Download
+
+### ✔ Update Installation
+
+### ✔ Update Cache Cleanup
+
+### ✔ Windows.old Cleanup
+
+### ✔ DISM /StartComponentCleanup
+
+### ✔ Optional user prompt at startup
+
+### Trigger manually:
+
+```powershell
+.\DeepCleanPro.ps1 -RunWindowsUpdates
+```
+
+(In Full mode, the script asks **Y/N** by default.)
+
+---
+
+# 📁 5. Backup & Logging System (Deep Internals)
+
+Deep Clean Pro maintains:
+
+### ✔ Service configuration backups
+
+Saved to:
+
+```
+C:\DeepCleanPro\Backups\Services\ServiceConfig_YYYYMMDD_HHMMSS.csv
+```
+
+### ✔ Registry backups
+
+Example:
+
+```
+C:\DeepCleanPro\Backups\Registry\MemoryManagement_YYYYMMDD_HHMMSS.reg
+```
+
+### ✔ Logs
+
+```
+C:\DeepCleanPro\Logs\DeepClean_YYYYMMDD.log
+```
+
+### ✔ Temp staging directory
+
+```
+%TEMP%\DeepCleanPro\
+```
+
+This system ensures the tool is **safe**, **auditable**, and **recoverable**.
+
+---
+
+# ☁️ 6. OneDrive Liberator (Advanced Removal Tool)
+
+Deep Clean Pro ships with **OneDrive Liberator** — a tool for **complete, permanent OneDrive removal**.
+
+### What it does:
+
+* Backs up all OneDrive files
+* Moves Desktop/Documents/Pictures **out of OneDrive**
+* Uninstalls OneDrive
+* Removes Explorer sidebar entries
+* Deletes leftover folders
+* Blocks OneDrive from reinstalling via Windows Update or Store
+* Prompts for restart
+
+### Run it:
+
+```powershell
+.\OneDriveNuke.ps1   # or the Desktop shortcut
+```
+
+### Safe Defaults:
+
+`-KeepFiles` is **true** by default.
+
+---
+
+# 📦 7. Advanced Installation Methods
+
+## Method A — Git + DEPLOY.ps1
+
+Ideal for technicians, power users, and contributors.
+
+```powershell
+git clone https://github.com/iSystemDevelopment/deep-clean-pro.git
+cd deep-clean-pro
+
+.\DEPLOY.ps1 -CreateShortcuts -CreateScheduledTask
+```
+
+---
+
+## Method B — Raw Script With Parameters
+
+Download and execute entirely in memory:
+
 ```powershell
 $params = @{
-    Profile = 'Gaming'
+    Profile   = 'Gaming'
     QuickMode = $true
-    NoReboot = $true
+    NoReboot  = $true
 }
-& ([scriptblock]::Create((irm 'irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex'))) @params
+
+& ([ScriptBlock]::Create(
+    (irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1')
+)) @params
 ```
 
-### Method 3: Custom Gist Integration
+---
+
+## Method C — Custom Launcher (Your own Logic)
+
+Use your own auth, Gist, private Git, or custom delivery.
+
+Example template:
+
 ```powershell
-# Create custom launcher with authentication
-$launcher = @'
 param([string]$Token)
 $headers = @{ Authorization = "Bearer $Token" }
-$script = Invoke-RestMethod -Uri "YOUR_PRIVATE_REPO_URL" -Headers $headers
+$script  = Invoke-RestMethod -Uri "YOUR_PRIVATE_REPO_URL" -Headers $headers
 Invoke-Expression $script
-'@
-$launcher | Out-File -FilePath "CustomLauncher.ps1"
 ```
 
-## 📡 Remote Deployment
+---
 
-### Deploy via Group Policy
+# 🌐 8. Remote & Enterprise Deployment (Lightweight Section)
+
+This section provides light enterprise usage.
+For full enterprise deployment, see the **ENTERPRISE.md** (optional future file).
+
+---
+
+## A) Group Policy Startup Script
+
+Deploy silently across an OU:
+
 ```powershell
-# Create GPO startup script
 $gpoScript = @'
-if (Test-NetConnection -ComputerName github.com -Port 443 -InformationLevel Quiet) {
-    Start-Process powershell.exe -ArgumentList "-ExecutionPolicy Bypass -Command `"irm 'GIST_URL' | iex`"" -WindowStyle Hidden
+if (Test-NetConnection github.com -Port 443 -InformationLevel Quiet) {
+    Start-Process powershell.exe -WindowStyle Hidden -ArgumentList "-ExecutionPolicy Bypass -Command `"irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex`""
 }
 '@
 ```
 
-### Deploy via SCCM/Intune
+---
+
+## B) Intune / SCCM Package
+
 ```xml
 <Package>
   <Name>Deep Clean Pro</Name>
   <Version>2.2.0</Version>
-  <CommandLine>powershell.exe -ExecutionPolicy Bypass -File DeepCleanPro.ps1 -Profile Office -QuickMode</CommandLine>
+  <CommandLine>
+    powershell.exe -ExecutionPolicy Bypass -File DeepCleanPro.ps1 -Profile Office -QuickMode
+  </CommandLine>
   <DetectionMethod>
     <RegistryKey>HKLM\SOFTWARE\DeepCleanPro</RegistryKey>
     <Value>Version</Value>
@@ -135,250 +346,131 @@ if (Test-NetConnection -ComputerName github.com -Port 443 -InformationLevel Quie
 </Package>
 ```
 
-## 🔒 Security Hardening
+---
 
-### Implement Signature Verification
+## C) Domain-Wide Execution
+
 ```powershell
-# Add to launcher
-$scriptHash = (Get-FileHash -Algorithm SHA256 -InputStream ([IO.MemoryStream]::new([Text.Encoding]::UTF8.GetBytes($scriptContent)))).Hash
-$trustedHashes = @(
-    'YOUR_SCRIPT_HASH_HERE'
-)
-if ($scriptHash -notin $trustedHashes) {
-    throw "Script integrity check failed"
-}
+$computers = Get-ADComputer -Filter * | Select-Object -ExpandProperty Name
+$script    = "\\FileServer\Scripts\DeepCleanPro.ps1"
+
+Invoke-Command -ComputerName $computers -ScriptBlock {
+    & $using:script -Profile Office -QuickMode
+} -ThrottleLimit 10
 ```
 
-### Add Logging and Auditing
+---
+
+# 🧪 9. Testing & Validation (Advanced)
+
+### Validation Script
+
 ```powershell
-# Enhanced logging
-$Script:AuditLog = @{
-    User = $env:USERNAME
-    Computer = $env:COMPUTERNAME
-    StartTime = Get-Date
-    Parameters = $PSBoundParameters
-    Changes = @()
-}
-
-# Log each change
-function Add-AuditEntry {
-    param($Action, $Target, $Result)
-    $Script:AuditLog.Changes += @{
-        Timestamp = Get-Date
-        Action = $Action
-        Target = $Target
-        Result = $Result
-    }
-}
-
-# Export audit log
-$Script:AuditLog | ConvertTo-Json -Depth 10 | Out-File "$LogPath\Audit_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
+C:\DeepCleanPro\Scripts\VALIDATE.ps1
 ```
 
-## 🧪 Testing Framework
+### Unit tests
 
-### Run Specific Test Suites
 ```powershell
-# Unit tests only
-Invoke-Pester -Path .\Tests\DeepCleanPro.Tests.ps1 -Tag Unit
-
-# Integration tests
-Invoke-Pester -Path .\Tests\DeepCleanPro.Tests.ps1 -Tag Integration
-
-# Performance benchmarks
-Invoke-Pester -Path .\Tests\DeepCleanPro.Tests.ps1 -Tag Performance
-
-# Security tests
-Invoke-Pester -Path .\Tests\DeepCleanPro.Tests.ps1 -Tag Security
+Invoke-Pester -Path .\Tests\
 ```
 
-### Create Custom Test Cases
+### WhatIf global debugging
+
 ```powershell
-Describe "Custom Optimization Tests" {
-    Context "Profile Validation" {
-        It "Should apply Gaming profile correctly" {
-            Mock Set-ItemProperty {}
-            Apply-ProfileOptimizations -ProfileName 'Gaming'
-            Assert-MockCalled Set-ItemProperty -Times 4 -Exactly
-        }
-    }
-}
+.\DeepCleanPro.ps1 -Profile Gaming -WhatIf
 ```
 
-## ⚡ Performance Tuning
+### Trace execution
 
-### Parallel Execution
 ```powershell
-# Run cleanup tasks in parallel
+Set-PSDebug -Trace 2
+```
+
+---
+
+# ⚡ 10. Performance Techniques for Power Users
+
+### Run modules in parallel
+
+```powershell
 $jobs = @()
 $jobs += Start-Job -ScriptBlock { Clear-TempFiles }
 $jobs += Start-Job -ScriptBlock { Optimize-Services }
-$jobs += Start-Job -ScriptBlock { Clean-RegistryKeys }
 $jobs | Wait-Job | Receive-Job
 ```
 
-### Memory-Optimized Operations
+### Chunk processing large dir trees
+
 ```powershell
-# Process large datasets in chunks
-Get-ChildItem -Path C:\ -Recurse -File |
-    Select-Object -First 1000 |
-    ForEach-Object -Parallel {
-        # Process file
-    } -ThrottleLimit 4
+Get-ChildItem C:\ -Recurse -File |
+    Select -First 1000 |
+    ForEach-Object { /* logic */ }
 ```
 
-## 🔄 CI/CD Integration
+---
 
-### GitHub Actions Matrix Testing
-```yaml
-strategy:
-  matrix:
-    os: [windows-2019, windows-2022]
-    profile: [Gaming, Development, Music, Video, Office]
-    mode: [Quick, Full]
-```
+# 🔌 11. Extension & Customization System
 
-### Pre-commit Hooks
-```bash
-#!/bin/sh
-# .git/hooks/pre-commit
-powershell -Command "
-    Invoke-ScriptAnalyzer -Path . -Recurse -Severity Error
-    if ($LASTEXITCODE -ne 0) { exit 1 }
-    Invoke-Pester -Path .\Tests -PassThru | Select -ExpandProperty FailedCount
-"
-```
+## Load your own modules
 
-## 📊 Monitoring and Analytics
-
-### Performance Metrics Collection
 ```powershell
-$metrics = @{
-    ExecutionTime = (Measure-Command { .\DeepCleanPro.ps1 -QuickMode }).TotalSeconds
-    SpaceFreed = (Get-PSDrive C).Free - $initialFree
-    ServicesOptimized = (Get-Service | Where-Object StartType -eq 'Disabled').Count
-    RegistryKeysModified = $Script:RegistryChanges.Count
+# Extensions/*.ps1 will auto-load
+$extensions = Get-ChildItem ".\Extensions\*.ps1"
+foreach ($ext in $extensions) {
+    . $ext.FullName
 }
-
-# Send to monitoring service
-Invoke-RestMethod -Uri "https://your-metrics-api.com/collect" -Method Post -Body ($metrics | ConvertTo-Json)
 ```
 
-## 🎯 Custom Modules
+## Create a custom profile
 
-### Create Your Own Profile
 ```powershell
-# Add to DeepCleanPro.ps1
 'CustomProfile' {
     Write-ColorOutput "Applying custom optimizations..." -Type Info
-    
-    # Your custom optimizations here
-    Set-ItemProperty -Path "HKCU:\YourPath" -Name "YourSetting" -Value 1
-    
-    # Import external module
     Import-Module .\Modules\CustomOptimizations.psm1
     Invoke-CustomOptimization
 }
 ```
 
-### Extension System
+---
+
+# 🔒 12. Security Hardening
+
+### Script integrity validation
+
 ```powershell
-# Load extensions dynamically
-$extensions = Get-ChildItem -Path ".\Extensions\*.ps1"
-foreach ($ext in $extensions) {
-    Write-ColorOutput "Loading extension: $($ext.Name)" -Type Info
-    . $ext.FullName
+$scriptHash = (Get-FileHash -Algorithm SHA256 -InputStream ([IO.MemoryStream]::new(
+    [Text.Encoding]::UTF8.GetBytes($scriptContent)
+))).Hash
+
+$trusted = @("PUT YOUR HASH HERE")
+
+if ($scriptHash -notin $trusted) {
+    throw "Script integrity check failed"
 }
 ```
 
-## 🔐 Enterprise Deployment
+### Audit logging
 
-### Domain-Wide Deployment
 ```powershell
-# Deploy to all domain computers
-$computers = Get-ADComputer -Filter * | Select-Object -ExpandProperty Name
-$scriptPath = "\\FileServer\Scripts\DeepCleanPro.ps1"
-
-Invoke-Command -ComputerName $computers -ScriptBlock {
-    & $using:scriptPath -Profile Office -QuickMode
-} -ThrottleLimit 10
-```
-
-### Compliance Reporting
-```powershell
-# Generate compliance report
-$report = foreach ($computer in $computers) {
-    Test-Connection -ComputerName $computer -Count 1 -Quiet
-    [PSCustomObject]@{
-        Computer = $computer
-        Optimized = Test-Path "\\$computer\C$\DeepCleanPro\Logs"
-        LastRun = Get-Item "\\$computer\C$\DeepCleanPro\Logs\*.log" | 
-                  Select-Object -Last 1 -ExpandProperty LastWriteTime
-    }
-}
-$report | Export-Csv -Path "OptimizationCompliance.csv"
-```
-
-## 📈 Advanced Troubleshooting
-
-### Debug Mode
-```powershell
-$DebugPreference = 'Continue'
-.\DeepCleanPro.ps1 -Profile Gaming -WhatIf
-```
-
-### Trace Execution
-```powershell
-Set-PSDebug -Trace 2
-.\DeepCleanPro.ps1 -QuickMode
-Set-PSDebug -Off
-```
-
-### Performance Profiling
-```powershell
-$profile = Measure-Script -Path .\DeepCleanPro.ps1 -Expression { 
-    .\DeepCleanPro.ps1 -QuickMode 
-}
-$profile | Select-Object Line, HitCount, Duration | Sort-Object Duration -Descending
-```
-
-## 🚀 API Integration
-
-### REST API for Remote Control
-```powershell
-# Create simple API endpoint
-$listener = New-Object System.Net.HttpListener
-$listener.Prefixes.Add("http://+:8080/deepclean/")
-$listener.Start()
-
-while ($true) {
-    $context = $listener.GetContext()
-    $request = $context.Request
-    $response = $context.Response
-    
-    if ($request.HttpMethod -eq "POST") {
-        $body = [System.IO.StreamReader]::new($request.InputStream).ReadToEnd()
-        $params = $body | ConvertFrom-Json
-        
-        Start-Job -ScriptBlock {
-            & .\DeepCleanPro.ps1 @using:params
-        }
-        
-        $response.StatusCode = 200
-        $response.Close()
-    }
+$Script:AuditLog = @{
+    User = $env:USERNAME
+    Computer = $env:COMPUTERNAME
+    Start = Get-Date
+    Changes = @()
 }
 ```
 
 ---
 
-## 📚 Additional Resources
+# 📚 13. Resources for Advanced Users
 
-- [PowerShell Best Practices](https://docs.microsoft.com/powershell/scripting/developer/cmdlet/strongly-encouraged-development-guidelines)
-- [Windows Registry Reference](https://docs.microsoft.com/windows/win32/sysinfo/registry)
-- [Group Policy Reference](https://docs.microsoft.com/windows/deployment/group-policy/)
-- [Performance Tuning Guidelines](https://docs.microsoft.com/windows-server/administration/performance-tuning/)
+* PowerShell Docs: [https://learn.microsoft.com/powershell](https://learn.microsoft.com/powershell)
+* Windows Registry Reference
+* Performance Tuning Guidelines
+* GitHub Actions Docs
+* Pester Testing Framework
 
 ---
 
-**For Enterprise Support**: Contact Dr-Diodac for custom implementations and enterprise features.
+# 🎉 Done!
