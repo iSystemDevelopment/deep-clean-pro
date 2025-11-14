@@ -1,228 +1,303 @@
 <#
 .SYNOPSIS
-    Validates PowerShell code blocks in Markdown documentation
+    Validates PowerShell code blocks in Markdown documentation.
+
 .DESCRIPTION
-    Parses Markdown files and checks all PowerShell code blocks for syntax errors.
-    This ensures documentation examples are valid and won't cause errors when users copy them.
+    Scans Markdown files for fenced PowerShell code blocks (```powershell, ```ps, ```ps1)
+    and validates them using the PowerShell parser. This ensures that documentation
+    examples are syntactically valid and safe to copy-paste.
+
+    Additionally, it emits warnings for:
+      - Placeholder text (YOUR-..., <PLACEHOLDER>, etc.)
+      - Hardcoded C:\DeepCleanPro paths without environment variables
+      - Old Dr-Diodac repo links in examples
+
 .PARAMETER Path
-    Path to the Markdown file to check (default: README.md)
+    Path to a Markdown file or directory to check.
+    Default: current directory (.)
+
 .PARAMETER Recurse
-    Check all .md files in repository
+    When specified, recurses into subdirectories and checks all .md files.
+
+.PARAMETER Detailed
+    When specified, prints detailed information for each code block, including
+    warnings and success messages. Otherwise, only errors are shown.
+
+.PARAMETER FailOnWarning
+    When specified, any warning will cause the script to exit with code 1.
+    Useful for strict CI pipelines.
+
 .EXAMPLE
     .\CheckMarkdownPSBlocks.ps1 -Path README.md
-    Check PowerShell blocks in README.md
+
 .EXAMPLE
-    .\CheckMarkdownPSBlocks.ps1 -Recurse
-    Check all Markdown files in repository
+    .\CheckMarkdownPSBlocks.ps1 -Recurse -Detailed
+
+.EXAMPLE
+    .\CheckMarkdownPSBlocks.ps1 -Recurse -FailOnWarning
 #>
 
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [string]$Path = 'README.md',
-    
+    [string]$Path = '.',
+
     [switch]$Recurse,
-    
+
     [switch]$Detailed,
-    
+
     [switch]$FailOnWarning
 )
 
-# Initialize counters
-$Script:TotalFiles = 0
-$Script:TotalBlocks = 0
-$Script:ErrorBlocks = 0
-$Script:WarningBlocks = 0
+# Global counters
+$Script:TotalFiles     = 0
+$Script:TotalBlocks    = 0
+$Script:ErrorBlocks    = 0
+$Script:WarningBlocks  = 0
 
-function Test-PowerShellBlock {
+function Write-SectionHeader {
+    param([string]$Message)
+
+    Write-Host ""
+    Write-Host "==========================================================" -ForegroundColor Cyan
+    Write-Host $Message -ForegroundColor White
+    Write-Host "==========================================================" -ForegroundColor Cyan
+}
+
+function Get-MarkdownFiles {
     param(
-        [string]$Code,
-        [string]$File,
-        [int]$BlockNumber
+        [string]$Path,
+        [switch]$Recurse
     )
-    
-    $tokens = $null
-    $errors = $null
-    
-    # Parse the code block
-    [void][System.Management.Automation.Language.Parser]::ParseInput(
-        $Code,
-        [ref]$tokens,
-        [ref]$errors
+
+    if (Test-Path $Path -PathType Leaf) {
+        if ($Path.ToLower().EndsWith('.md')) {
+            return ,(Get-Item $Path)
+        } else {
+            Write-Host "[WARN] Provided file is not a .md: $Path" -ForegroundColor Yellow
+            return @()
+        }
+    }
+
+    if (Test-Path $Path -PathType Container) {
+        $searchPath = (Resolve-Path $Path).ProviderPath
+        if ($Recurse) {
+            return Get-ChildItem -Path $searchPath -Filter '*.md' -Recurse -File
+        } else {
+            return Get-ChildItem -Path $searchPath -Filter '*.md' -File
+        }
+    }
+
+    Write-Host "[WARN] Path not found: $Path" -ForegroundColor Yellow
+    return @()
+}
+
+function Get-PowerShellBlocksFromMarkdown {
+    <#
+    .SYNOPSIS
+        Extracts PowerShell code blocks from Markdown text.
+
+    .DESCRIPTION
+        Finds fenced code blocks with language tags: powershell, ps, ps1.
+        Returns objects with Code, StartLine, EndLine.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Content
     )
-    
-    if ($errors -and $errors.Count -gt 0) {
-        Write-Host "  ❌ Block $BlockNumber has syntax errors:" -ForegroundColor Red
-        foreach ($error in $errors) {
-            Write-Host "     Line $($error.Extent.StartLineNumber): $($error.Message)" -ForegroundColor Red
-            if ($Detailed) {
-                Write-Host "     Code: $($error.Extent.Text)" -ForegroundColor Gray
+
+    $lines = $Content -split "`r?`n"
+    $blocks = @()
+
+    $insideBlock  = $false
+    $blockLines   = @()
+    $blockStart   = 0
+
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $line = $lines[$i]
+
+        if (-not $insideBlock) {
+            # Detect start fence: ```powershell / ```ps / ```ps1 (case-insensitive)
+            if ($line -match '^\s*```(?<lang>[a-zA-Z0-9+-]*)\s*$') {
+                $lang = $Matches['lang'].ToLower()
+                if ($lang -in @('powershell','ps','ps1')) {
+                    $insideBlock = $true
+                    $blockLines  = @()
+                    $blockStart  = $i + 2   # content starts on next line (1-based)
+                }
             }
         }
-        return $false
-    }
-    
-    # Check for common issues that aren't syntax errors
-    $warnings = @()
-    
-    # Check for incomplete examples (placeholders)
-    if ($Code -match '<.*?>|\[.*?\]|YOUR-.*?|PLACEHOLDER') {
-        $warnings += "Contains placeholder text that needs to be replaced"
-    }
-    
-    # Check for hardcoded paths that might not exist
-    if ($Code -match 'C:\\DeepCleanPro' -and $Code -notmatch '\$env:') {
-        $warnings += "Contains hardcoded path that might not exist on all systems"
-    }
-    
-    # Check for missing error handling in examples
-    if ($Code -match 'Invoke-WebRequest|Invoke-RestMethod' -and $Code -notmatch 'try|catch|-ErrorAction') {
-        $warnings += "Web request without error handling"
-    }
-    
-    if ($warnings.Count -gt 0) {
-        Write-Host "  ⚠️  Block $BlockNumber has warnings:" -ForegroundColor Yellow
-        foreach ($warning in $warnings) {
-            Write-Host "     $warning" -ForegroundColor Yellow
+        else {
+            # End of block fence
+            if ($line -match '^\s*```\s*$') {
+                $blockEnd = $i       # line before fence is last content line (1-based)
+                $code     = ($blockLines -join [Environment]::NewLine)
+                $blocks  += [PSCustomObject]@{
+                    Code      = $code
+                    StartLine = $blockStart
+                    EndLine   = $blockEnd
+                }
+                $insideBlock = $false
+                $blockLines  = @()
+            } else {
+                $blockLines += $line
+            }
         }
-        $Script:WarningBlocks++
-        return -not $FailOnWarning
     }
-    
-    Write-Host "  ✅ Block $BlockNumber is valid" -ForegroundColor Green
-    return $true
+
+    return $blocks
+}
+
+function Test-PowerShellCodeBlock {
+    <#
+    .SYNOPSIS
+        Validates a single PowerShell code block and returns diagnostics.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Code,
+        [Parameter(Mandatory)][string]$File,
+        [Parameter(Mandatory)][int]$BlockNumber
+    )
+
+    $result = [PSCustomObject]@{
+        File     = $File
+        Block    = $BlockNumber
+        IsValid  = $true
+        Error    = $null
+        Warnings = @()
+    }
+
+    # 1) Syntax validation via parser (no execution)
+    try {
+        $null = [System.Management.Automation.PSParser]::Tokenize($Code, [ref]$null)
+    } catch {
+        $result.IsValid = $false
+        $result.Error   = $_.Exception.Message
+        return $result
+    }
+
+    # 2) Heuristic warnings
+
+    # Placeholder / template text
+    if ($Code -match '<.*?>|\[.*?\]|YOUR-.*?|PLACEHOLDER') {
+        $result.Warnings += "Contains placeholder text (YOUR-..., <...>, or [..]) that should be replaced with real values."
+    }
+
+    # Hardcoded DeepCleanPro paths without env vars
+    if ($Code -match 'C:\\DeepCleanPro' -and $Code -notmatch '\$env:') {
+        $result.Warnings += "Contains hardcoded C:\DeepCleanPro path. Consider using environment variables or documented default paths."
+    }
+
+    # Old Dr-Diodac repo references
+    if ($Code -match 'Dr-Diodac/deep-clean-pro' -or
+        $Code -match 'https://github\.com/Dr-Diodac/deep-clean-pro' -or
+        $Code -match 'https://raw\.githubusercontent\.com/Dr-Diodac/deep-clean-pro') {
+        $result.Warnings += "Contains old Dr-Diodac repository URL. Use iSystemDevelopment/deep-clean-pro instead."
+    }
+
+    return $result
 }
 
 function Test-MarkdownFile {
     param(
-        [string]$FilePath
+        [Parameter(Mandatory)][System.IO.FileInfo]$File
     )
-    
-    if (-not (Test-Path -LiteralPath $FilePath)) {
-        Write-Error "File not found: $FilePath"
-        return $false
-    }
-    
+
     $Script:TotalFiles++
-    $fileName = Split-Path -Leaf $FilePath
-    Write-Host "`nChecking: $fileName" -ForegroundColor Cyan
-    
-    $content = Get-Content -Raw -LiteralPath $FilePath
-    $blocks = @()
-    $inBlock = $false
-    $buffer = New-Object System.Text.StringBuilder
-    $lineNumber = 0
-    $blockStartLine = 0
-    
-    # Parse the Markdown file for PowerShell blocks
-    foreach ($line in ($content -split "`n")) {
-        $lineNumber++
-        
-        if (-not $inBlock) {
-            # Check for PowerShell block start
-            if ($line -match '^```(powershell|ps1?)\s*$') {
-                $inBlock = $true
-                $blockStartLine = $lineNumber
-                [void]$buffer.Clear()
-                continue
-            }
-        }
-        else {
-            # Check for block end
-            if ($line -match '^```\s*$') {
-                $blockContent = $buffer.ToString().Trim()
-                if ($blockContent) {
-                    $blocks += @{
-                        Code = $blockContent
-                        StartLine = $blockStartLine
-                    }
-                }
-                $inBlock = $false
-                continue
-            }
-            [void]$buffer.AppendLine($line)
-        }
-    }
-    
+
+    Write-Host ""
+    Write-Host "Checking file: $($File.FullName)" -ForegroundColor Cyan
+
+    $content = Get-Content -Path $File.FullName -Raw -ErrorAction Stop
+    $blocks  = Get-PowerShellBlocksFromMarkdown -Content $content
+
     if ($blocks.Count -eq 0) {
-        Write-Host "  No PowerShell blocks found" -ForegroundColor Gray
+        Write-Host "  No PowerShell code blocks found" -ForegroundColor DarkGray
         return $true
     }
-    
+
     Write-Host "  Found $($blocks.Count) PowerShell block(s)" -ForegroundColor Gray
-    
-    $fileValid = $true
+
+    $fileValid   = $true
     $blockNumber = 0
-    
+
     foreach ($block in $blocks) {
         $blockNumber++
         $Script:TotalBlocks++
-        
-        if ($Detailed) {
-            Write-Host "`n  Checking block $blockNumber (line $($block.StartLine))..." -ForegroundColor Gray
-        }
-        
-        $isValid = Test-PowerShellBlock -Code $block.Code -File $fileName -BlockNumber $blockNumber
-        
-        if (-not $isValid) {
+
+        $testResult = Test-PowerShellCodeBlock -Code $block.Code -File $File.FullName -BlockNumber $blockNumber
+
+        if (-not $testResult.IsValid) {
             $Script:ErrorBlocks++
             $fileValid = $false
+            Write-Host "  ❌ Block #$blockNumber (Lines $($block.StartLine)-$($block.EndLine)) has SYNTAX ERROR:" -ForegroundColor Red
+            Write-Host "     $($testResult.Error)" -ForegroundColor Red
+            continue
+        }
+
+        if ($testResult.Warnings.Count -gt 0) {
+            $Script:WarningBlocks += $testResult.Warnings.Count
+            $fileValid = $fileValid -and (-not $FailOnWarning)
+            if ($Detailed) {
+                Write-Host "  ⚠ Block #$blockNumber (Lines $($block.StartLine)-$($block.EndLine)) WARNINGS:" -ForegroundColor Yellow
+                foreach ($w in $testResult.Warnings) {
+                    Write-Host "     - $w" -ForegroundColor Yellow
+                }
+            }
+        } elseif ($Detailed) {
+            Write-Host "  ✅ Block #$blockNumber (Lines $($block.StartLine)-$($block.EndLine)) is valid" -ForegroundColor Green
         }
     }
-    
+
     return $fileValid
 }
 
-# Main execution
-Write-Host "PowerShell Code Block Validator for Markdown Documentation" -ForegroundColor Cyan
-Write-Host "==========================================================" -ForegroundColor Cyan
+# ── Main Execution ────────────────────────────────────────────────────────────
+
+Write-SectionHeader "Deep Clean Pro - Markdown PowerShell Block Validation"
+
+$files = Get-MarkdownFiles -Path $Path -Recurse:$Recurse
+
+if (-not $files -or $files.Count -eq 0) {
+    Write-Host "No Markdown files found for path '$Path'." -ForegroundColor Yellow
+    exit 0
+}
 
 $allValid = $true
 
-if ($Recurse) {
-    # Find all Markdown files
-    $repoRoot = Get-Location
-    $mdFiles = Get-ChildItem -Path $repoRoot -Filter "*.md" -Recurse -File |
-               Where-Object { $_.DirectoryName -notmatch 'node_modules|\.git|build|dist' }
-    
-    Write-Host "`nFound $($mdFiles.Count) Markdown file(s) to check" -ForegroundColor Yellow
-    
-    foreach ($file in $mdFiles) {
-        $isValid = Test-MarkdownFile -FilePath $file.FullName
-        if (-not $isValid) {
-            $allValid = $false
-        }
-    }
-}
-else {
-    # Check single file
-    $fullPath = if ([System.IO.Path]::IsPathRooted($Path)) {
-        $Path
-    } else {
-        Join-Path (Get-Location) $Path
-    }
-    
-    $isValid = Test-MarkdownFile -FilePath $fullPath
-    if (-not $isValid) {
+foreach ($file in $files) {
+    $fileResult = Test-MarkdownFile -File $file
+    if (-not $fileResult) {
         $allValid = $false
     }
 }
 
-# Summary report
-Write-Host "`n==========================================================" -ForegroundColor Cyan
-Write-Host "Summary Report" -ForegroundColor Cyan
+Write-Host ""
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "Files Checked:        $Script:TotalFiles" -ForegroundColor White
-Write-Host "PowerShell Blocks:    $Script:TotalBlocks" -ForegroundColor White
-Write-Host "Blocks with Errors:   $Script:ErrorBlocks" -ForegroundColor $(if ($Script:ErrorBlocks -gt 0) { 'Red' } else { 'Green' })
-Write-Host "Blocks with Warnings: $Script:WarningBlocks" -ForegroundColor $(if ($Script:WarningBlocks -gt 0) { 'Yellow' } else { 'Green' })
+Write-Host "Files Checked:        $Script:TotalFiles"    -ForegroundColor White
+Write-Host "PowerShell Blocks:    $Script:TotalBlocks"   -ForegroundColor White
 
-if ($allValid) {
-    Write-Host "`n✅ All PowerShell code blocks are valid!" -ForegroundColor Green
-    exit 0
-}
-else {
-    Write-Host "`n❌ Found invalid PowerShell code blocks in documentation" -ForegroundColor Red
+$errColor = if ($Script:ErrorBlocks   -gt 0) { 'Red'    } else { 'Green' }
+$warColor = if ($Script:WarningBlocks -gt 0) { 'Yellow' } else { 'Green' }
+
+Write-Host "Blocks with Errors:   $Script:ErrorBlocks"   -ForegroundColor $errColor
+Write-Host "Blocks with Warnings: $Script:WarningBlocks" -ForegroundColor $warColor
+Write-Host "==========================================================" -ForegroundColor Cyan
+
+if ($Script:ErrorBlocks -gt 0) {
+    Write-Host "`n❌ Found invalid PowerShell code blocks in documentation." -ForegroundColor Red
     Write-Host "Please fix the syntax errors before committing." -ForegroundColor Yellow
     exit 1
 }
+
+if ($FailOnWarning -and $Script:WarningBlocks -gt 0) {
+    Write-Host "`n⚠ Validation failed due to warnings (FailOnWarning enabled)." -ForegroundColor Yellow
+    exit 1
+}
+
+Write-Host "`n✅ All PowerShell code blocks are syntactically valid." -ForegroundColor Green
+
+if ($Script:WarningBlocks -gt 0) {
+    Write-Host "There are warnings you may want to address." -ForegroundColor Yellow
+}
+
+exit 0
