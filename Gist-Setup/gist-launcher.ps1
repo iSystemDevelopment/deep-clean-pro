@@ -18,8 +18,8 @@ param()
 
 # Configuration - Update this URL to point to your repository
 $Script:Config = @{
-    RepoUrl = "https://raw.githubusercontent.com/Dr-Diodac/deep-clean-pro/main/DeepCleanPro.ps1"
-    ValidateUrl = "https://raw.githubusercontent.com/Dr-Diodac/deep-clean-pro/main/Scripts/VALIDATE.ps1"
+    RepoUrl    = "https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/refs/heads/main/DeepCleanPro.ps1"
+    ValidateUrl = "https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/refs/heads/main/Scripts/VALIDATE.ps1"
     Timeout = 30
     RetryCount = 3
     RetryDelay = 2
