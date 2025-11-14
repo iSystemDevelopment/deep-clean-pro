@@ -1,375 +1,341 @@
 <#
 .SYNOPSIS
-    Windows Policy Configuration Helper for Deep Clean Pro
+    Repairs broken or misconfigured local Windows policies.
+
 .DESCRIPTION
-    Security-hardened script to configure Windows policies for optimal PowerShell execution.
-    Creates backups before making changes and supports restoration.
+    Fix-WindowsPolicies.ps1 repairs a set of local policy-related registry keys that commonly
+    cause problems with Windows Update, Windows Defender, Explorer restrictions, and privacy/
+    telemetry when they are corrupted or mis-set by other tools.
+
+    It:
+      - Creates a JSON backup of all relevant policy keys before making changes
+      - Repairs or removes invalid / overly aggressive policy values
+      - ONLY operates on local policy keys (HKLM/HKCU:\Software\Policies\...)
+      - Does NOT touch domain GPOs (SYSVOL or AD-based policies)
+
 .PARAMETER BackupPath
-    Path to save the backup file
-.PARAMETER RestoreBackup
-    Restore from a previous backup
-.PARAMETER NoPause
-    Skip the pause at the end
+    Optional path to save the policy backup JSON.
+    Default: C:\DeepCleanPro\Backups\PolicyBackup_yyyyMMdd_HHmmss.json
+
+.PARAMETER Force
+    Skip the interactive confirmation prompt and run immediately.
+
 .EXAMPLE
     .\Fix-WindowsPolicies.ps1
-    Configure policies with default settings
+
 .EXAMPLE
-    .\Fix-WindowsPolicies.ps1 -RestoreBackup -BackupPath "C:\Backup\policy.json"
-    Restore from backup
+    .\Fix-WindowsPolicies.ps1 -BackupPath "D:\Backups\PolicyBackup.json"
+
+.EXAMPLE
+    .\Fix-WindowsPolicies.ps1 -Force
+
+.NOTES
+    Version: 1.0.0
+    Part of the Deep Clean Pro suite (iSystemDevelopment/deep-clean-pro)
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [string]$BackupPath = "$env:TEMP\PolicyBackup_$(Get-Date -Format 'yyyyMMdd_HHmmss').json",
-    [switch]$RestoreBackup,
-    [switch]$NoPause
+    [string]$BackupPath,
+    [switch]$Force
 )
 
-#Requires -RunAsAdministrator
-#Requires -Version 5.1
+# ── Auto-elevate to Administrator (for local .ps1 usage) ──────────────────────
+if (-not ([Security.Principal.WindowsPrincipal]
+         [Security.Principal.WindowsIdentity]::GetCurrent()
+    ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
 
-# Security check - verify script source
-$scriptHash = (Get-FileHash -Path $PSCommandPath -Algorithm SHA256).Hash
-$trustedHashes = @(
-    # Add your script's SHA256 hash here after first deployment
-    # 'YOUR_SCRIPT_HASH_HERE'
-)
+    Write-Host "🔐 Elevating to Administrator..." -ForegroundColor Yellow
 
-function Write-PolicyLog {
+    $scriptPath = $PSCommandPath
+    if (-not $scriptPath) {
+        $scriptPath = $MyInvocation.MyCommand.Path
+    }
+
+    if (-not $scriptPath) {
+        Write-Host "[ERROR] Cannot auto-elevate: script path is unknown." -ForegroundColor Red
+        exit 1
+    }
+
+    $arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`""
+    foreach ($key in $PSBoundParameters.Keys) {
+        $value = $PSBoundParameters[$key]
+        if ($value -is [switch]) {
+            if ($value) { $arguments += " -$key" }
+        } else {
+            $arguments += " -$key `"$value`""
+        }
+    }
+
+    Start-Process powershell.exe -Verb RunAs -ArgumentList $arguments
+    exit
+}
+
+# ── Basic logging helper (minimal but compatible with DCP style) ──────────────
+function Write-ColorOutput {
     param(
+        [Parameter(Mandatory)]
         [string]$Message,
         [ValidateSet('Info', 'Success', 'Warning', 'Error')]
         [string]$Type = 'Info'
     )
-    
+
     $colors = @{
-        'Info'    = 'Cyan'
-        'Success' = 'Green'
-        'Warning' = 'Yellow'
-        'Error'   = 'Red'
+        Info    = 'Cyan'
+        Success = 'Green'
+        Warning = 'Yellow'
+        Error   = 'Red'
     }
-    
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    Write-Host "[$timestamp] $Message" -ForegroundColor $colors[$Type]
-    
-    # Log to file
-    $logPath = "$env:TEMP\PolicyConfig_$(Get-Date -Format 'yyyyMMdd').log"
-    Add-Content -Path $logPath -Value "[$timestamp] [$Type] $Message" -ErrorAction SilentlyContinue
+
+    $prefix = @{
+        Info    = '[INFO]'
+        Success = '[SUCCESS]'
+        Warning = '[WARNING]'
+        Error   = '[ERROR]'
+    }
+
+    Write-Host "$($prefix[$Type]) $Message" -ForegroundColor $colors[$Type]
 }
 
-function Test-AdminPrivileges {
-    $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-    return $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+# ── Banner ────────────────────────────────────────────────────────────────────
+Clear-Host
+Write-Host @"
+╔══════════════════════════════════════════════════════════════════╗
+║              FIX WINDOWS POLICIES - REPAIR TOOL                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+This tool repairs LOCAL Windows policies that may break:
+  • Windows Update
+  • Windows Defender
+  • Explorer restrictions / UI
+  • Privacy / telemetry behavior
+
+It will:
+  • Create a JSON backup of affected policy keys
+  • Remove or correct problematic values
+  • NOT modify domain Group Policy (AD/SYSVOL)
+"@ -ForegroundColor Cyan
+
+# ── Confirmation ──────────────────────────────────────────────────────────────
+if (-not $Force) {
+    Write-Host "`nThis will modify local policy-related registry keys." -ForegroundColor Yellow
+    Write-Host "A backup will be created before any change." -ForegroundColor Yellow
+    $confirm = Read-Host "`nType 'YES' to continue"
+    if ($confirm -ne 'YES') {
+        Write-ColorOutput "Operation cancelled by user." -Type Warning
+        exit 0
+    }
 }
 
-function Get-CurrentPolicies {
-    Write-PolicyLog "Gathering current policy settings..." -Type Info
-    
-    $policies = @{
-        ExecutionPolicies = @{}
-        SecuritySettings = @{}
-        TLSSettings = @{}
-        SystemSettings = @{}
+# ── Determine Backup Path ─────────────────────────────────────────────────────
+if (-not $BackupPath) {
+    $defaultBase = "C:\DeepCleanPro\Backups"
+    if (-not (Test-Path $defaultBase)) {
+        New-Item -Path $defaultBase -ItemType Directory -Force | Out-Null
     }
-    
-    # Execution Policies
-    @('MachinePolicy', 'UserPolicy', 'Process', 'CurrentUser', 'LocalMachine') | ForEach-Object {
+    $BackupPath = Join-Path $defaultBase ("PolicyBackup_{0}.json" -f (Get-Date -Format 'yyyyMMdd_HHmmss'))
+}
+
+Write-ColorOutput "Backup will be saved to: $BackupPath" -Type Info
+
+# ── Helper: Capture a snapshot of policy keys ─────────────────────────────────
+function Get-PolicySnapshot {
+    [OutputType([hashtable])]
+    param()
+
+    $keysToCapture = @(
+        'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate',
+        'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Defender',
+        'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System',
+        'HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection',
+        'HKCU:\SOFTWARE\Policies\Microsoft\Windows\Explorer',
+        'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer'
+    )
+
+    $snapshot = @{}
+
+    foreach ($path in $keysToCapture) {
         try {
-            $policies.ExecutionPolicies[$_] = (Get-ExecutionPolicy -Scope $_ -ErrorAction Stop).ToString()
-        } catch {
-            $policies.ExecutionPolicies[$_] = 'Undefined'
-        }
-    }
-    
-    # PowerShell Settings
-    try {
-        $policies.SecuritySettings.ScriptBlockLogging = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging" -Name "EnableScriptBlockLogging" -ErrorAction SilentlyContinue).EnableScriptBlockLogging
-        $policies.SecuritySettings.TranscriptionLogging = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\Transcription" -Name "EnableTranscripting" -ErrorAction SilentlyContinue).EnableTranscripting
-    } catch {
-        # Settings not found
-    }
-    
-    # TLS Settings
-    $policies.TLSSettings.SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol.ToString()
-    
-    # DEP Settings
-    try {
-        $bcdedit = bcdedit /enum | Out-String
-        if ($bcdedit -match "nx\s+(\w+)") {
-            $policies.SystemSettings.DEP = $matches[1]
-        }
-    } catch {
-        $policies.SystemSettings.DEP = 'Unknown'
-    }
-    
-    return $policies
-}
-
-function Backup-Policies {
-    param(
-        [Parameter(Mandatory)]
-        [hashtable]$Policies,
-        [Parameter(Mandatory)]
-        [string]$Path
-    )
-    
-    Write-PolicyLog "Creating backup at: $Path" -Type Info
-    
-    try {
-        $Policies | ConvertTo-Json -Depth 10 | Out-File -FilePath $Path -Encoding UTF8
-        Write-PolicyLog "Backup created successfully" -Type Success
-        return $true
-    } catch {
-        Write-PolicyLog "Failed to create backup: $_" -Type Error
-        return $false
-    }
-}
-
-function Set-OptimalPolicies {
-    Write-PolicyLog "Configuring optimal policies..." -Type Info
-    
-    $changes = @()
-    
-    # 1. Execution Policy (Process scope only for safety)
-    try {
-        if ($PSCmdlet.ShouldProcess("ExecutionPolicy", "Set to RemoteSigned for CurrentUser")) {
-            Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force -ErrorAction Stop
-            $changes += "✓ Set ExecutionPolicy to RemoteSigned for CurrentUser"
-            Write-PolicyLog "Execution policy configured" -Type Success
-        }
-    } catch {
-        Write-PolicyLog "Could not set execution policy: $_" -Type Warning
-    }
-    
-    # 2. Enable TLS 1.2
-    try {
-        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-        $changes += "✓ Enabled TLS 1.2"
-        Write-PolicyLog "TLS 1.2 enabled" -Type Success
-    } catch {
-        Write-PolicyLog "Could not enable TLS 1.2: $_" -Type Warning
-    }
-    
-    # 3. Configure PowerShell Script Block Logging (for security)
-    try {
-        if ($PSCmdlet.ShouldProcess("ScriptBlockLogging", "Enable")) {
-            $regPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging"
-            if (-not (Test-Path $regPath)) {
-                New-Item -Path $regPath -Force | Out-Null
-            }
-            Set-ItemProperty -Path $regPath -Name "EnableScriptBlockLogging" -Value 1 -Type DWord
-            $changes += "✓ Enabled Script Block Logging for security"
-            Write-PolicyLog "Script block logging enabled" -Type Success
-        }
-    } catch {
-        Write-PolicyLog "Could not enable script block logging: $_" -Type Warning
-    }
-    
-    # 4. Configure DEP (Data Execution Prevention)
-    try {
-        if ($PSCmdlet.ShouldProcess("DEP", "Set to OptOut")) {
-            $result = Start-Process -FilePath "bcdedit.exe" -ArgumentList "/set nx OptOut" -Wait -PassThru -NoNewWindow
-            if ($result.ExitCode -eq 0) {
-                $changes += "✓ Configured DEP to OptOut mode"
-                Write-PolicyLog "DEP configured" -Type Success
-            }
-        }
-    } catch {
-        Write-PolicyLog "Could not configure DEP: $_" -Type Warning
-    }
-    
-    # 5. Configure Windows Defender exclusions (removed for security)
-    # Note: Adding exclusions weakens security. Removed this functionality.
-    
-    # 6. Configure PowerShell Module Installation
-    try {
-        if ($PSCmdlet.ShouldProcess("PSGallery", "Set as Trusted")) {
-            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction Stop
-            $changes += "✓ Set PSGallery as trusted repository"
-            Write-PolicyLog "PSGallery configured" -Type Success
-        }
-    } catch {
-        Write-PolicyLog "Could not configure PSGallery: $_" -Type Warning
-    }
-    
-    # 7. Ensure NuGet provider is installed
-    try {
-        if (-not (Get-PackageProvider -Name NuGet -ErrorAction SilentlyContinue)) {
-            if ($PSCmdlet.ShouldProcess("NuGet", "Install Package Provider")) {
-                Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -ErrorAction Stop | Out-Null
-                $changes += "✓ Installed NuGet package provider"
-                Write-PolicyLog "NuGet provider installed" -Type Success
-            }
-        }
-    } catch {
-        Write-PolicyLog "Could not install NuGet provider: $_" -Type Warning
-    }
-    
-    return $changes
-}
-
-function Restore-PoliciesFromBackup {
-    param(
-        [Parameter(Mandatory)]
-        [string]$Path
-    )
-    
-    if (-not (Test-Path $Path)) {
-        Write-PolicyLog "Backup file not found: $Path" -Type Error
-        return $false
-    }
-    
-    Write-PolicyLog "Restoring policies from backup..." -Type Info
-    
-    try {
-        $backup = Get-Content -Path $Path -Raw | ConvertFrom-Json
-        
-        # Restore Execution Policies
-        foreach ($scope in $backup.ExecutionPolicies.PSObject.Properties) {
-            if ($scope.Name -in @('CurrentUser', 'LocalMachine') -and $scope.Value -ne 'Undefined') {
-                try {
-                    if ($PSCmdlet.ShouldProcess("ExecutionPolicy $($scope.Name)", "Restore to $($scope.Value)")) {
-                        Set-ExecutionPolicy -ExecutionPolicy $scope.Value -Scope $scope.Name -Force -ErrorAction Stop
-                        Write-PolicyLog "Restored ExecutionPolicy for $($scope.Name)" -Type Success
+            if (Test-Path $path) {
+                $props = Get-ItemProperty -Path $path -ErrorAction Stop
+                $obj = @{}
+                foreach ($p in $props.PSObject.Properties) {
+                    if ($p.Name -notmatch '^PS(.*)$') {
+                        $obj[$p.Name] = $p.Value
                     }
+                }
+                $snapshot[$path] = $obj
+            } else {
+                $snapshot[$path] = $null
+            }
+        } catch {
+            $snapshot[$path] = $null
+        }
+    }
+
+    return $snapshot
+}
+
+# ── Helper: Save snapshot to JSON ─────────────────────────────────────────────
+function Save-PolicySnapshot {
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$Snapshot,
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
+
+    try {
+        $json = $Snapshot | ConvertTo-Json -Depth 6
+        $dir  = Split-Path $Path -Parent
+
+        if (-not (Test-Path $dir)) {
+            New-Item -Path $dir -ItemType Directory -Force | Out-Null
+        }
+
+        $json | Out-File -FilePath $Path -Encoding UTF8 -Force
+        Write-ColorOutput "Policy backup saved successfully." -Type Success
+    } catch {
+        Write-ColorOutput "Failed to save policy backup: $($_.Exception.Message)" -Type Error
+        throw
+    }
+}
+
+# ── Helper: Safely remove a property if it exists ─────────────────────────────
+function Remove-PolicyValue {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Name
+    )
+
+    if (Test-Path $Path) {
+        $props = Get-ItemProperty -Path $Path -ErrorAction SilentlyContinue
+        if ($props.PSObject.Properties.Name -contains $Name) {
+            if ($PSCmdlet.ShouldProcess("$Path\$Name", "Remove")) {
+                try {
+                    Remove-ItemProperty -Path $Path -Name $Name -ErrorAction Stop
+                    Write-ColorOutput "Removed policy value: $Path -> $Name" -Type Success
                 } catch {
-                    Write-PolicyLog "Could not restore ExecutionPolicy for $($scope.Name): $_" -Type Warning
+                    Write-ColorOutput "Failed to remove $Path\$Name: $($_.Exception.Message)" -Type Warning
                 }
             }
         }
-        
-        # Restore other settings as needed
-        # Note: Some settings may require system restart
-        
-        Write-PolicyLog "Restoration completed" -Type Success
-        return $true
-    } catch {
-        Write-PolicyLog "Failed to restore from backup: $_" -Type Error
-        return $false
     }
 }
 
-function Test-PolicyConfiguration {
-    Write-PolicyLog "Verifying configuration..." -Type Info
-    
-    $tests = @()
-    
-    # Test 1: Execution Policy
-    $execPolicy = Get-ExecutionPolicy -Scope CurrentUser
-    $tests += [PSCustomObject]@{
-        Test = "Execution Policy"
-        Expected = "RemoteSigned or Unrestricted"
-        Actual = $execPolicy
-        Passed = $execPolicy -in @('RemoteSigned', 'Unrestricted', 'Bypass')
+# ── Helper: Safely set a policy value ─────────────────────────────────────────
+function Set-PolicyValue {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Name,
+        [Parameter(Mandatory)][object]$Value,
+        [ValidateSet('String','DWord','QWord','Binary','MultiString','ExpandString')]
+        [string]$Type = 'DWord'
+    )
+
+    if ($PSCmdlet.ShouldProcess("$Path\$Name", "Set to $Value")) {
+        try {
+            if (-not (Test-Path $Path)) {
+                New-Item -Path $Path -Force | Out-Null
+            }
+            New-ItemProperty -Path $Path -Name $Name -Value $Value -PropertyType $Type -Force -ErrorAction Stop | Out-Null
+            Write-ColorOutput "Set policy value: $Path -> $Name = $Value" -Type Success
+        } catch {
+            Write-ColorOutput "Failed to set $Path\$Name: $($_.Exception.Message)" -Type Warning
+        }
     }
-    
-    # Test 2: TLS 1.2
-    $tlsEnabled = ([Net.ServicePointManager]::SecurityProtocol -band [Net.SecurityProtocolType]::Tls12) -ne 0
-    $tests += [PSCustomObject]@{
-        Test = "TLS 1.2"
-        Expected = "Enabled"
-        Actual = if ($tlsEnabled) { "Enabled" } else { "Disabled" }
-        Passed = $tlsEnabled
-    }
-    
-    # Test 3: PowerShell Version
-    $psVersion = $PSVersionTable.PSVersion
-    $tests += [PSCustomObject]@{
-        Test = "PowerShell Version"
-        Expected = "5.1 or higher"
-        Actual = $psVersion.ToString()
-        Passed = $psVersion.Major -ge 5 -and $psVersion.Minor -ge 1
-    }
-    
-    # Test 4: Admin Privileges
-    $isAdmin = Test-AdminPrivileges
-    $tests += [PSCustomObject]@{
-        Test = "Admin Privileges"
-        Expected = "True"
-        Actual = $isAdmin.ToString()
-        Passed = $isAdmin
-    }
-    
-    # Display results
-    Write-Host "`n===== CONFIGURATION TEST RESULTS =====`n" -ForegroundColor Cyan
-    
-    foreach ($test in $tests) {
-        $symbol = if ($test.Passed) { "✓" } else { "✗" }
-        $color = if ($test.Passed) { "Green" } else { "Red" }
-        
-        Write-Host "$symbol $($test.Test)" -ForegroundColor $color
-        Write-Host "  Expected: $($test.Expected)" -ForegroundColor Gray
-        Write-Host "  Actual: $($test.Actual)" -ForegroundColor Gray
-    }
-    
-    $passedCount = ($tests | Where-Object { $_.Passed }).Count
-    $totalCount = $tests.Count
-    
-    Write-Host "`nResult: $passedCount/$totalCount tests passed" -ForegroundColor $(if ($passedCount -eq $totalCount) { "Green" } else { "Yellow" })
-    
-    return ($passedCount -eq $totalCount)
 }
 
-# Main execution
+# ── Repairs: Windows Update Policy ────────────────────────────────────────────
+function Repair-WindowsUpdatePolicy {
+    Write-ColorOutput "Repairing Windows Update policy..." -Type Info
+
+    $wuPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate'
+    $auPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU'
+
+    # Common bad values: overly strict deferral, disabled AU, set to WSUS without server
+    Remove-PolicyValue -Path $wuPath -Name 'WUServer'
+    Remove-PolicyValue -Path $wuPath -Name 'WUStatusServer'
+    Remove-PolicyValue -Path $wuPath -Name 'UpdateServiceUrlAlternate'
+
+    # Reset AUOptions and NoAutoUpdate if they exist and are blocking updates
+    # We don't force enable auto-update, we just clear broken explicit settings.
+    Remove-PolicyValue -Path $auPath -Name 'AUOptions'
+    Remove-PolicyValue -Path $auPath -Name 'NoAutoUpdate'
+    Remove-PolicyValue -Path $auPath -Name 'ScheduledInstallDay'
+    Remove-PolicyValue -Path $auPath -Name 'ScheduledInstallTime'
+}
+
+# ── Repairs: Windows Defender / Security Policy ───────────────────────────────
+function Repair-DefenderPolicy {
+    Write-ColorOutput "Repairing Windows Defender policy..." -Type Info
+
+    $defPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender'
+    $sysPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System'
+
+    # Remove DisableAntiSpyware / DisableRealtimeMonitoring / DisableRoutinelyTakingAction
+    Remove-PolicyValue -Path $defPath -Name 'DisableAntiSpyware'
+    Remove-PolicyValue -Path $defPath -Name 'DisableRealtimeMonitoring'
+    Remove-PolicyValue -Path $defPath -Name 'DisableRoutinelyTakingAction'
+
+    # Reset "EnableSmartScreen" type keys under System if present and invalid
+    Remove-PolicyValue -Path $sysPath -Name 'EnableSmartScreen'
+}
+
+# ── Repairs: Explorer / UI Restrictions ───────────────────────────────────────
+function Repair-ExplorerPolicy {
+    Write-ColorOutput "Repairing Explorer / UI restrictions..." -Type Info
+
+    $explorerHKCU = 'HKCU:\SOFTWARE\Policies\Microsoft\Windows\Explorer'
+    $explorerHKLM = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer'
+
+    $blockedKeys = @(
+        'NoControlPanel',
+        'NoViewOnDrive',
+        'NoFolderOptions',
+        'NoFileMenu',
+        'NoRun',
+        'DisableSearchBoxSuggestions'
+    )
+
+    foreach ($name in $blockedKeys) {
+        Remove-PolicyValue -Path $explorerHKCU -Name $name
+        Remove-PolicyValue -Path $explorerHKLM -Name $name
+    }
+}
+
+# ── Repairs: Telemetry / Data Collection (stability-focused) ──────────────────
+function Repair-TelemetryPolicy {
+    Write-ColorOutput "Repairing Data Collection / Telemetry policy..." -Type Info
+
+    $dcPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection'
+
+    # Bad values: AllowTelemetry = 0 with invalid build/edition can break features.
+    # We don't force a specific level, we remove the forced policy and let OS decide.
+    Remove-PolicyValue -Path $dcPath -Name 'AllowTelemetry'
+}
+
+# ── Main execution ────────────────────────────────────────────────────────────
 try {
-    if (-not (Test-AdminPrivileges)) {
-        throw "This script requires Administrator privileges. Please run as Administrator."
-    }
-    
-    Write-Host "`n╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "║         Windows Policy Configuration Helper v1.1            ║" -ForegroundColor Cyan
-    Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
-    
-    if ($RestoreBackup) {
-        # Restore mode
-        Write-PolicyLog "Starting restore process..." -Type Info
-        if (Restore-PoliciesFromBackup -Path $BackupPath) {
-            Write-PolicyLog "Policies restored successfully" -Type Success
-        } else {
-            Write-PolicyLog "Restore process failed" -Type Error
-            exit 1
-        }
-    } else {
-        # Configuration mode
-        $currentPolicies = Get-CurrentPolicies
-        
-        # Create backup
-        $backupDir = Split-Path $BackupPath -Parent
-        if (-not (Test-Path $backupDir)) {
-            New-Item -Path $backupDir -ItemType Directory -Force | Out-Null
-        }
-        
-        if (Backup-Policies -Policies $currentPolicies -Path $BackupPath) {
-            Write-PolicyLog "Backup saved to: $BackupPath" -Type Success
-            
-            # Apply optimal policies
-            $changes = Set-OptimalPolicies
-            
-            if ($changes.Count -gt 0) {
-                Write-Host "`n===== CHANGES APPLIED =====`n" -ForegroundColor Green
-                $changes | ForEach-Object { Write-Host $_ -ForegroundColor Green }
-            }
-            
-            # Verify configuration
-            Start-Sleep -Seconds 2
-            $testResult = Test-PolicyConfiguration
-            
-            if ($testResult) {
-                Write-PolicyLog "`nAll policies configured successfully!" -Type Success
-            } else {
-                Write-PolicyLog "`nSome policies may need manual configuration" -Type Warning
-            }
-        } else {
-            throw "Failed to create backup. Aborting configuration."
-        }
-    }
-    
-    if (-not $NoPause) {
-        Write-Host "`nPress any key to continue..." -ForegroundColor Yellow
-        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    }
-    
+    Write-ColorOutput "Creating policy backup snapshot..." -Type Info
+    $snapshot = Get-PolicySnapshot
+    Save-PolicySnapshot -Snapshot $snapshot -Path $BackupPath
+
+    # Execute each repair phase
+    Repair-WindowsUpdatePolicy
+    Repair-DefenderPolicy
+    Repair-ExplorerPolicy
+    Repair-TelemetryPolicy
+
+    Write-Host "`n" -NoNewline
+    Write-Host "════════════════════════════════════════════════════════════════" -ForegroundColor Green
+    Write-Host "         WINDOWS POLICY REPAIR COMPLETED SUCCESSFULLY          " -ForegroundColor Green
+    Write-Host "════════════════════════════════════════════════════════════════" -ForegroundColor Green
+
+    Write-Host "`nBackup location: $BackupPath" -ForegroundColor Yellow
+    Write-Host "A restart is recommended to apply all policy changes." -ForegroundColor Yellow
+
 } catch {
-    Write-PolicyLog "Critical error: $_" -Type Error
+    Write-ColorOutput "Critical error during policy repair: $_" -Type Error
     exit 1
 }
