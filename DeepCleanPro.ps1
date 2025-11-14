@@ -185,11 +185,11 @@ function Optimize-Services {
     Write-ColorOutput "Optimizing Windows services..." -Type Info
     
     $services = @(
-        @{Name = 'DiagTrack'; StartupType = 'Disabled'; Description = 'Connected User Experiences and Telemetry'},
+        @{Name = 'DiagTrack';        StartupType = 'Disabled'; Description = 'Connected User Experiences and Telemetry'},
         @{Name = 'dmwappushservice'; StartupType = 'Disabled'; Description = 'Device Management WAP Push'},
-        @{Name = 'WSearch'; StartupType = 'Manual'; Description = 'Windows Search'},
-        @{Name = 'SysMain'; StartupType = 'Manual'; Description = 'SysMain (Superfetch)'},
-        @{Name = 'Print Spooler'; StartupType = 'Manual'; Description = 'Print Spooler'}
+        @{Name = 'WSearch';          StartupType = 'Manual';   Description = 'Windows Search'},
+        @{Name = 'SysMain';          StartupType = 'Manual';   Description = 'SysMain (Superfetch)'},
+        @{Name = 'Spooler';          StartupType = 'Manual';   Description = 'Print Spooler'}  # actual service name
     )
     
     # Backup current service configurations
@@ -197,21 +197,36 @@ function Optimize-Services {
     foreach ($svc in $services) {
         $currentService = Get-Service -Name $svc.Name -ErrorAction SilentlyContinue
         if ($currentService) {
+            $startMode = $null
+            try {
+                $cimSvc = Get-CimInstance -ClassName Win32_Service -Filter "Name='$($svc.Name)'" -ErrorAction SilentlyContinue
+                if ($cimSvc) {
+                    $startMode = $cimSvc.StartMode
+                }
+            } catch {
+                # don't crash on backup read problems
+            }
+
             $serviceBackup += [PSCustomObject]@{
-                Name = $svc.Name
-                StartupType = (Get-WmiObject -Class Win32_Service -Filter "Name='$($svc.Name)'").StartMode
-                Status = $currentService.Status
+                Name        = $svc.Name
+                StartupType = $startMode
+                Status      = $currentService.Status
             }
         }
     }
     
     # Save backup
-    $backupFile = "$Script:BackupPath\Services\ServiceConfig_$(Get-Date -Format 'yyyyMMdd_HHmmss').csv"
-    $backupDir = Split-Path $backupFile -Parent
-    if (-not (Test-Path $backupDir)) {
-        New-Item -Path $backupDir -ItemType Directory -Force | Out-Null
+    try {
+        $backupFile = "$Script:BackupPath\Services\ServiceConfig_$(Get-Date -Format 'yyyyMMdd_HHmmss').csv"
+        $backupDir  = Split-Path $backupFile -Parent
+        if (-not (Test-Path $backupDir)) {
+            New-Item -Path $backupDir -ItemType Directory -Force | Out-Null
+        }
+        $serviceBackup | Export-Csv -Path $backupFile -NoTypeInformation
+        Write-ColorOutput "Saved service configuration backup to: $backupFile" -Type Success
+    } catch {
+        Write-ColorOutput "Warning: Failed to save service backup. Details: $($_.Exception.Message)" -Type Warning
     }
-    $serviceBackup | Export-Csv -Path $backupFile -NoTypeInformation
     
     # Optimize services
     foreach ($service in $services) {
@@ -224,10 +239,11 @@ function Optimize-Services {
                 }
             }
         } catch {
-            Write-ColorOutput "Failed to configure $($service.Name): $_" -Type Warning
+            Write-ColorOutput "Failed to configure $($service.Name): $($_.Exception.Message)" -Type Warning
         }
     }
 }
+
 
 function Clear-TempFiles {
     Write-ColorOutput "Cleaning temporary files..." -Type Info
