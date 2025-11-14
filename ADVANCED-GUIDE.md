@@ -82,7 +82,7 @@ Deep Clean Pro is a PowerShell-based Windows optimization framework with profile
 
 ### Method 1: Git with Specific Branch
 ```powershell
-git clone -b development https://github.com/Dr-Diodac/deep-clean-pro.git
+git clone -b development https://github.com/iSystemDevelopment/deep-clean-pro.git
 cd deep-clean-pro
 .\DEPLOY.ps1 -TargetPath "C:\Tools\DCP" -CreateScheduledTask -NonInteractive
 ```
@@ -94,7 +94,7 @@ $params = @{
     QuickMode = $true
     NoReboot = $true
 }
-& ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/Dr-Diodac/deep-clean-pro/main/DeepCleanPro.ps1'))) @params
+& ([scriptblock]::Create((irm 'irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex'))) @params
 ```
 
 ### Method 3: Custom Gist Integration
