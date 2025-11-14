@@ -1,392 +1,341 @@
-# Contributing to Deep Clean Pro
+# 🤝 Contributing to **Deep Clean Pro**
 
-First off, thank you for considering contributing to Deep Clean Pro! It's people like you that make Deep Clean Pro such a great tool. 🎉
+Thank you for considering contributing to **Deep Clean Pro**!
+This project exists because of developers, sysadmins, testers, and power users like you.
+Whether you’re fixing bugs, improving docs, or adding features — **you’re appreciated**. ❤️
 
-## 📋 Table of Contents
+This guide explains:
 
-- [Code of Conduct](#code-of-conduct)
-- [How Can I Contribute?](#how-can-i-contribute)
-- [Development Setup](#development-setup)
-- [Style Guidelines](#style-guidelines)
-- [Testing](#testing)
-- [Pull Request Process](#pull-request-process)
-- [Security](#security)
+* How to report bugs
+* How to suggest features
+* How to contribute code
+* Development environment setup
+* Testing requirements
+* Security expectations
+* Pull request guidelines
 
-## 📜 Code of Conduct
+---
 
-This project and everyone participating in it is governed by our Code of Conduct. By participating, you are expected to uphold this code:
+# 📜 Code of Conduct
 
-- **Be Respectful**: Treat everyone with respect. No harassment, discrimination, or inappropriate behavior.
-- **Be Collaborative**: Work together towards common goals.
-- **Be Professional**: Maintain professionalism in all interactions.
-- **Be Constructive**: Provide helpful feedback and accept criticism gracefully.
+By participating in this project, you agree to:
 
-## 🤝 How Can I Contribute?
+* **Be respectful** — No harassment, abuse, or discrimination
+* **Be constructive** — Help others, give actionable feedback
+* **Be professional** — Keep communication clear and polite
+* **Be collaborative** — Work together for a better project
 
-### Reporting Bugs
+Failure to follow the code may result in moderation actions.
 
-Before creating bug reports, please check existing issues to avoid duplicates. When creating a bug report, please include:
+---
 
-- **Clear title and description**
-- **Steps to reproduce**
-- **Expected behavior**
-- **Actual behavior**
-- **System information** (Windows version, PowerShell version)
-- **Screenshots** if applicable
-- **Error messages** and logs
+# 🐛 Reporting Bugs
 
-**Template:**
+Before reporting, please:
+
+1. Check **existing issues**
+2. Try the **latest version**
+3. Run **Test Mode** (`-WhatIf`)
+4. Run validator:
+
+   ```powershell
+   C:\DeepCleanPro\Scripts\VALIDATE.ps1
+   ```
+
+### ❗ Do NOT report security issues publicly.
+
+Use the private process described in **SECURITY.md**.
+
+### ✔ Bug Report Template
+
 ```markdown
 ## Bug Description
-Brief description of the bug
+Clear summary of the issue.
 
 ## Steps to Reproduce
-1. Run command '...'
-2. Select option '...'
-3. See error
+1. Run …
+2. Choose …
+3. Observe …
 
 ## Expected Behavior
-What should happen
+What should happen.
 
 ## Actual Behavior
-What actually happens
+What actually happened.
 
-## System Information
-- Windows Version: [e.g., Windows 10 21H2]
-- PowerShell Version: [e.g., 5.1.19041.1682]
-- Deep Clean Pro Version: [e.g., 2.2.0]
+## Logs / Screenshots
+Attach logs from C:\DeepCleanPro\Logs if applicable.
 
-## Additional Context
-Any other relevant information
+## System Info
+- Windows version:
+- PowerShell version:
+- Deep Clean Pro version:
+- Execution method (shortcut / raw / git clone):
 ```
 
-### Suggesting Enhancements
+---
 
-Enhancement suggestions are tracked as GitHub issues. When creating an enhancement suggestion, please include:
+# 💡 Suggesting Enhancements
 
-- **Use case**: Why is this enhancement needed?
-- **Proposed solution**: How should it work?
-- **Alternatives considered**: What other solutions did you consider?
-- **Additional context**: Any other relevant information
+Enhancement suggestions are welcome!
+When submitting a feature request, include:
 
-### Code Contributions
+* **Use case** — Why is this needed?
+* **Proposed behavior** — How should it work?
+* **Alternatives considered** — Why this approach?
+* **Potential impact** — Risks or complexity
 
-1. **Fork the Repository**
-2. **Create a Feature Branch**
-3. **Make Your Changes**
-4. **Test Thoroughly**
-5. **Submit a Pull Request**
+---
 
-## 🛠️ Development Setup
+# 🧑‍💻 Contributing Code
 
-### Prerequisites
+## 1. Fork the repository
 
-- Windows 10+ with PowerShell 5.1+
-- Git for version control
-- Administrator privileges for testing
-- Visual Studio Code (recommended) with PowerShell extension
-
-### Setting Up Your Development Environment
-
-```powershell
-# 1. Fork and clone the repository
-git clone https://github.com/YOUR-USERNAME/deep-clean-pro.git
+```bash
+git fork https://github.com/iSystemDevelopment/deep-clean-pro
+git clone https://github.com/YOUR-USERNAME/deep-clean-pro
 cd deep-clean-pro
+```
 
-# 2. Create a feature branch
+## 2. Create a feature branch
+
+```bash
 git checkout -b feature/your-feature-name
+```
 
-# 3. Set up development environment
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+## 3. Set up the development environment
 
-# 4. Install development dependencies (if any)
-Install-Module -Name PSScriptAnalyzer -Scope CurrentUser
-Install-Module -Name Pester -Scope CurrentUser
+```powershell
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
 
-# 5. Run validation
+Install-Module PSScriptAnalyzer -Scope CurrentUser
+Install-Module Pester -Scope CurrentUser
+```
+
+## 4. Make your changes
+
+Follow the **style guidelines** below.
+
+## 5. Validate your work
+
+```powershell
 .\Scripts\VALIDATE.ps1
+Invoke-Pester -Path .\Tests\
 ```
 
-### Project Structure
+## 6. Open a Pull Request
 
-```
-deep-clean-pro/
-├── DeepCleanPro.ps1           # Main script
-├── Fix-WindowsPolicies.ps1    # Policy helper
-├── DEPLOY.ps1                 # Deployment script
-├── Scripts/                   # Utility scripts
-│   ├── VALIDATE.ps1
-│   └── CreateDesktopShortcuts.ps1
-├── Gist-Setup/                # Gist launcher files
-├── Tests/                     # Test files
-├── Docs/                      # Documentation
-└── .github/                   # GitHub specific files
-```
+Follow the PR template below.
 
-## 📝 Style Guidelines
+---
 
-### PowerShell Coding Standards
+# 🧪 Testing Requirements
 
-Follow the [PowerShell Practice and Style Guide](https://poshcode.gitbook.io/powershell-practice-and-style/):
+Before submitting a PR:
 
-#### Naming Conventions
+* [ ] All existing tests must pass
+* [ ] New features must include tests
+* [ ] WhatIf mode must behave correctly
+* [ ] No PSScriptAnalyzer warnings
+* [ ] Code must run cleanly on Windows 10 & 11
+* [ ] CIM-based functions must not call deprecated WMI
+
+---
+
+# 🧹 Style Guidelines
+
+### ✔ PowerShell Standards
+
+We follow the **PowerShell Practice & Style Guide**.
+
+### Naming Conventions
+
 ```powershell
-# Functions: Verb-Noun (Approved Verbs)
-function Get-SystemInfo { }
+# Functions: Verb-Noun
+function Optimize-Services {}
 
-# Variables: PascalCase for script/global, camelCase for local
+# Globals (script scope)
 $Script:Version = "2.2.0"
-$localVariable = "value"
 
-# Constants: UPPERCASE with underscores
-$MAXIMUM_RETRIES = 3
+# Local variables
+$serviceList = @()
+
+# Constants
+$MAX_RETRIES = 3
 ```
 
-#### Code Structure
+### Function Structure
+
 ```powershell
-# Function template
 function Verb-Noun {
     <#
     .SYNOPSIS
-        Brief description
+        Short description
     .DESCRIPTION
-        Detailed description
-    .PARAMETER ParameterName
-        Parameter description
+        Full detailed description
+    .PARAMETER ExampleParam
+        Explanation
     .EXAMPLE
-        Example usage
+        Verb-Noun -ExampleParam value
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
-        [Parameter(Mandatory)]
-        [string]$ParameterName
+        [string]$ExampleParam
     )
-    
-    begin {
-        # Initialization
+
+    try {
+        # Work
     }
-    
-    process {
-        # Main logic
-    }
-    
-    end {
-        # Cleanup
+    catch {
+        Write-Error "Error: $_"
     }
 }
 ```
 
-#### Best Practices
-- **Use approved verbs** from `Get-Verb`
-- **Add comment-based help** to all functions
-- **Use `[CmdletBinding()]`** for advanced functions
-- **Implement `-WhatIf`** for destructive operations
-- **Use proper error handling** with try/catch
-- **Write verbose output** for debugging
-- **Validate parameters** with validation attributes
+### Required Practices
 
-### Documentation Standards
+* ✔ All destructive functions **must support** `-WhatIf`
+* ✔ Use **CIM** instead of WMI (`Get-CimInstance`)
+* ✔ All functions must include **comment-based help**
+* ✔ Use `ShouldProcess` for:
 
-- Use **Markdown** for all documentation
-- Include **examples** for all features
-- Keep **README** updated with changes
-- Document **breaking changes** prominently
-- Add **inline comments** for complex logic
+  * Registry writes
+  * Service modifications
+  * File deletions
+* ✔ Use `Try/Catch` for ALL external calls
+* ✔ Use `Write-ColorOutput` logging functions
+* ✔ Keep code readable and commented
 
-### Commit Messages
+### Forbidden Patterns
 
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
+❌ `Invoke-Expression <untrusted>`
+❌ Hardcoded credentials
+❌ Silently ignoring exceptions
+❌ WMI (`Get-WmiObject`)
+❌ Manipulating execution policy globally
+❌ Unnecessary admin elevation
 
-```
-type(scope): subject
+---
 
-body
+# 🔬 Testing Guide
 
-footer
-```
-
-**Types:**
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation only
-- `style`: Code style changes
-- `refactor`: Code refactoring
-- `test`: Adding tests
-- `chore`: Maintenance tasks
-
-**Examples:**
-```
-feat(cleanup): add Windows Search index optimization
-
-fix(services): correct service backup path validation
-
-docs(readme): update installation instructions
-
-refactor(validation): improve error handling in Test-Requirement
-```
-
-## 🧪 Testing
-
-### Running Tests
+### Run full test suite:
 
 ```powershell
-# Run all tests
 Invoke-Pester -Path .\Tests\
+```
 
-# Run specific test file
-Invoke-Pester -Path .\Tests\DeepCleanPro.Tests.ps1
+### Validate system requirements:
 
-# Run with coverage
-Invoke-Pester -Path .\Tests\ -CodeCoverage .\DeepCleanPro.ps1
-
-# Run validation
+```powershell
 .\Scripts\VALIDATE.ps1
 ```
 
-### Writing Tests
-
-Create test files in the `Tests` directory following the naming convention `*.Tests.ps1`:
+### Test specific file:
 
 ```powershell
-Describe "Function-Name" {
-    Context "When valid input is provided" {
-        It "Should return expected output" {
-            $result = Function-Name -Parameter "Value"
-            $result | Should -Be "ExpectedValue"
-        }
-    }
-    
-    Context "When invalid input is provided" {
-        It "Should throw an error" {
-            { Function-Name -Parameter $null } | Should -Throw
-        }
-    }
-}
+Invoke-Pester -Path .\Tests\DeepCleanPro.Tests.ps1
 ```
 
-### Testing Requirements
+### Test with coverage:
 
-Before submitting a PR, ensure:
-- [ ] All existing tests pass
-- [ ] New features have tests
-- [ ] Code coverage is maintained or improved
-- [ ] WhatIf mode works correctly
-- [ ] No PSScriptAnalyzer warnings
+```powershell
+Invoke-Pester -CodeCoverage .\DeepCleanPro.ps1
+```
 
-## 🔄 Pull Request Process
+### Manual Test Examples
 
-### Before Submitting
+```powershell
+.\DeepCleanPro.ps1 -QuickMode -WhatIf
+.\DeepCleanPro.ps1 -Profile Gaming
+.\DeepCleanPro.ps1 -RunWindowsUpdates
+.\OneDriveNuke.ps1 -Force
+```
 
-1. **Update documentation** for any changed functionality
-2. **Add tests** for new features
-3. **Run validation** and ensure all checks pass
-4. **Test on multiple Windows versions** if possible
-5. **Update CHANGELOG** if applicable
+---
 
-### PR Guidelines
+# 🔄 Pull Request Process
 
-1. **Title**: Use conventional commit format
-2. **Description**: Clearly describe what and why
-3. **Link Issues**: Reference related issues
-4. **Small PRs**: Keep changes focused and minimal
-5. **Screenshots**: Include for UI changes
+## Before Submitting
 
-### PR Template
+1. Update documentation if needed
+2. Add or update tests
+3. Verify cross-version compatibility
+4. Run PSSA + Pester
+5. Keep your PR focused (one feature / one fix)
+
+## PR Template
 
 ```markdown
 ## Description
-Brief description of changes
+Brief summary of the changes
 
 ## Type of Change
 - [ ] Bug fix
 - [ ] New feature
-- [ ] Breaking change
+- [ ] Enhancement
 - [ ] Documentation update
+- [ ] Breaking change
 
-## Testing
-- [ ] Tested on Windows 10
-- [ ] Tested on Windows 11
-- [ ] All tests pass
-- [ ] Added new tests
+## Testing Performed
+- [ ] Windows 10 tested
+- [ ] Windows 11 tested
+- [ ] Pester tests passed
+- [ ] VALIDATE.ps1 passed
+- [ ] WhatIf tested
 
 ## Checklist
 - [ ] Code follows style guidelines
-- [ ] Self-review completed
-- [ ] Comments added for complex code
-- [ ] Documentation updated
-- [ ] No new warnings
-- [ ] Version bumped if needed
-
-## Related Issues
-Fixes #(issue number)
-
-## Screenshots (if applicable)
+- [ ] Added documentation
+- [ ] Added tests
+- [ ] No warnings from PSScriptAnalyzer
+- [ ] Backwards compatible (unless breaking change)
 ```
-
-### Review Process
-
-1. **Automated checks** run on all PRs
-2. **Code review** by maintainers
-3. **Testing** in different environments
-4. **Approval** from at least one maintainer
-5. **Merge** using squash and merge
-
-## 🔒 Security
-
-### Security Considerations
-
-When contributing, please:
-- **Never commit** sensitive data or credentials
-- **Validate all inputs** to prevent injection attacks
-- **Use secure APIs** and avoid deprecated methods
-- **Follow principle of least privilege**
-- **Test security implications** of changes
-
-### Security Checklist
-
-- [ ] No hardcoded credentials
-- [ ] Input validation implemented
-- [ ] No execution of untrusted code
-- [ ] Proper error handling (no info leakage)
-- [ ] Secure file operations
-- [ ] No unnecessary privileges required
-
-## 🎯 Areas Needing Help
-
-We're particularly looking for help in these areas:
-
-- **Testing**: More comprehensive test coverage
-- **Documentation**: Tutorials and guides
-- **Localization**: Multi-language support
-- **Performance**: Optimization suggestions
-- **Compatibility**: Testing on different Windows versions
-- **Features**: New optimization modules
-
-## 📚 Resources
-
-### Helpful Links
-- [PowerShell Documentation](https://docs.microsoft.com/powershell/)
-- [PowerShell Gallery](https://www.powershellgallery.com/)
-- [Windows System Administration](https://docs.microsoft.com/windows-server/administration/windows-commands/windows-commands)
-
-### Learning Resources
-- [PowerShell Best Practices](https://docs.microsoft.com/powershell/scripting/developer/cmdlet/strongly-encouraged-development-guidelines)
-- [Git Workflow](https://www.atlassian.com/git/tutorials/comparing-workflows)
-- [Markdown Guide](https://www.markdownguide.org/)
-
-## 🙏 Recognition
-
-Contributors will be recognized in:
-- The project README
-- Release notes
-- Special thanks section
-
-## 📬 Contact
-
-- **GitHub Issues**: For bugs and features
-- **Discussions**: For questions and ideas
-- **Email**: dev@isystem.app for private concerns
 
 ---
 
-Thank you for contributing to Deep Clean Pro! Your efforts help make Windows optimization accessible to everyone. 🚀
+# 🔒 Security Expectations
+
+For all contributions:
+
+* **Never** commit secrets or tokens
+* Validate ALL inputs
+* Use safe file operations
+* Handle exceptions without revealing sensitive data
+* Follow principle of least privilege
+* Changes must not weaken security controls
+
+See **SECURITY.md** for full policy.
+
+---
+
+# 🌍 Areas You Can Contribute
+
+We welcome help in:
+
+* Testing on more Windows builds
+* New optimization profiles
+* Windows Update module improvements
+* OneDrive Liberator enhancements
+* Documentation & tutorials
+* UX improvements
+* Localization (multi-language support)
+* Performance tuning
+
+---
+
+# 📚 Helpful Resources
+
+* PowerShell Docs:
+  [https://learn.microsoft.com/powershell](https://learn.microsoft.com/powershell)
+* PSScriptAnalyzer:
+  [https://github.com/PowerShell/PSScriptAnalyzer](https://github.com/PowerShell/PSScriptAnalyzer)
+* Pester Testing:
+  [https://pester.dev](https://pester.dev)
+* GitHub Flow:
+  [https://guides.github.com/introduction/flow](https://guides.github.com/introduction/flow)
+
+---
+
+# 🙏 Thank You
+
