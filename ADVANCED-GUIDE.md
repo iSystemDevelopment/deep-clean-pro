@@ -13,11 +13,11 @@ Deep Clean Pro is a PowerShell-based Windows optimization framework with profile
              │
 ┌────────────▼────────────────────────────┐
 │         Core Optimization Engine        │
-│    (DeepCleanPro.ps1 - Main Script)    │
+│    (DeepCleanPro.ps1 - Main Script)     │
 ├─────────────────────────────────────────┤
 │  • Profile Manager (Gaming/Dev/Music)   │
 │  • Backup System (Registry/Services)    │
-│  • Safety Layer (WhatIf/ShouldProcess) │
+│  • Safety Layer (WhatIf/ShouldProcess)  │
 └────────────┬────────────────────────────┘
              │
 ┌────────────▼────────────────────────────┐
