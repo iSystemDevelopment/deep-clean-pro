@@ -23,7 +23,8 @@ echo.
 echo [*] Launching Gaming Optimization...
 echo.
 
-PowerShell -NoProfile -ExecutionPolicy Bypass -Command "& {Start-Process PowerShell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -Command \"$env:DCP_PROFILE=''Gaming''; irm ''https://gist.githubusercontent.com/Dr-Diodac/25787f26b3506573bd4df4c42d1ffce7/raw/DeepCleanPro-Launcher.ps1'' | iex\"' -Verb RunAs}"
+PowerShell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "& {Start-Process PowerShell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -Command \"$env:DCP_PROFILE=''Gaming''; irm ''https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1'' | iex\"' -Verb RunAs}"
 
 echo.
 echo ========================================================
@@ -31,4 +32,4 @@ echo Gaming optimization started!
 echo Your games will run MUCH better after this!
 echo ========================================================
 echo.
-timeout /t 5
+timeout /t 5 > nul
