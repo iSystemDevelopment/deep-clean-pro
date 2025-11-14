@@ -3,24 +3,19 @@
     Deep Clean Pro - GitHub Launcher Script
 .DESCRIPTION
     Lightweight launcher that fetches and executes the latest Deep Clean Pro
-    script from the GitHub repository. This script should be uploaded to a
-    GitHub Gist for use with online shortcuts.
+    from the GitHub repository. Upload this to your Gist.
 .NOTES
-    Version: 1.0.0
-    This launcher inherits environment variables from shortcuts:
-    - $env:DCP_QUICK_MODE: Enable quick mode
-    - $env:DCP_NO_REBOOT: Disable automatic reboot
-    - $WhatIfPreference: Enable test mode
+    Version: 1.0.1 - Fixed URLs and error handling
 #>
 
 [CmdletBinding()]
 param()
 
-# Configuration - Update this URL to point to your repository
+# Configuration - YOUR ACTUAL REPO
 $Script:Config = @{
-    RepoUrl    = "https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/refs/heads/main/DeepCleanPro.ps1"
-    ValidateUrl = "https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/refs/heads/main/Scripts/VALIDATE.ps1"
-    Timeout = 30
+    RepoUrl    = "https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1"
+    ValidateUrl = "https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/Scripts/VALIDATE.ps1"
+    Timeout    = 30
     RetryCount = 3
     RetryDelay = 2
 }
@@ -126,14 +121,21 @@ function Invoke-DeepCleanPro {
         # Build arguments based on environment variables
         $arguments = @()
         
+        # Profile support
+        if ($env:DCP_PROFILE) {
+            $arguments += "-Profile"
+            $arguments += $env:DCP_PROFILE
+            Write-LauncherMessage "Using profile: $($env:DCP_PROFILE)" -Type Info
+        }
+        
         if ($env:DCP_QUICK_MODE -eq 'true') {
             $arguments += '-QuickMode'
-            Write-LauncherMessage "Quick Mode enabled via environment variable" -Type Info
+            Write-LauncherMessage "Quick Mode enabled" -Type Info
         }
         
         if ($env:DCP_NO_REBOOT -eq 'true') {
             $arguments += '-NoReboot'
-            Write-LauncherMessage "Auto-reboot disabled via environment variable" -Type Info
+            Write-LauncherMessage "Auto-reboot disabled" -Type Info
         }
         
         if ($WhatIfPreference) {
@@ -169,7 +171,7 @@ function Show-LauncherHeader {
     Write-Host @"
 
 ╔═══════════════════════════════════════════════════════════════╗
-║           DEEP CLEAN PRO - GITHUB LAUNCHER v1.0              ║
+║           DEEP CLEAN PRO - GITHUB LAUNCHER v1.0               ║
 ╚═══════════════════════════════════════════════════════════════╝
 "@ -ForegroundColor Cyan
 }
