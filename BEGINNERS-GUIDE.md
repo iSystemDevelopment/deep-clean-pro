@@ -19,7 +19,7 @@
 ### Step 2: Copy This Magic Line
 Select and copy this entire line (Ctrl+C):
 ```
-irm 'https://gist.githubusercontent.com/Dr-Diodac/25787f26b3506573bd4df4c42d1ffce7/raw/DeepCleanPro-Launcher.ps1' | iex
+irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex
 ```
 
 ### Step 3: Paste and Run
