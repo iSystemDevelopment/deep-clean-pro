@@ -1,397 +1,339 @@
 <#
 .SYNOPSIS
-    Deep Clean Pro - Comprehensive Validation Script
+    Deep Clean Pro - Environment & System Validator
+
 .DESCRIPTION
-    Validates system compatibility, prerequisites, and Deep Clean Pro installation integrity.
+    VALIDATE.ps1 checks whether the current system is ready to safely run Deep Clean Pro.
+    It performs non-destructive checks only:
+
+      - OS version (Windows 10 / 11)
+      - PowerShell version (5.1+)
+      - Administrator privileges
+      - Execution policy compatibility
+      - TLS 1.2 availability
+      - Folder & file structure (DeepCleanPro.ps1, helpers, Backups, Logs)
+      - Optional network connectivity to GitHub
+
+    At the end it prints a summary and exits with:
+
+      - 0 if all critical checks pass
+      - 1 if any critical check fails
+
+.PARAMETER RootPath
+    Path to the Deep Clean Pro installation directory.
+    Default: C:\DeepCleanPro
+
+.PARAMETER SkipNetwork
+    Skip network connectivity checks (useful for offline environments).
+
 .PARAMETER Silent
-    Run without displaying detailed output
-.PARAMETER ReturnResults
-    Return results as an object instead of displaying
+    Suppress detailed output, show only final summary (useful for CI).
+
 .EXAMPLE
-    .\VALIDATE.ps1
-    Run interactive validation with detailed output
+    C:\DeepCleanPro\Scripts\VALIDATE.ps1
+
 .EXAMPLE
-    .\VALIDATE.ps1 -Silent -ReturnResults
-    Run silent validation and return results object
+    .\VALIDATE.ps1 -SkipNetwork
+
+.EXAMPLE
+    .\VALIDATE.ps1 -RootPath "D:\Tools\DeepCleanPro" -Silent
 #>
 
 [CmdletBinding()]
 param(
-    [switch]$Silent,
-    [switch]$ReturnResults
+    [string]$RootPath = "C:\DeepCleanPro",
+    [switch]$SkipNetwork,
+    [switch]$Silent
 )
 
-# Validation configuration
-$Script:Version = "1.0.0"
-$Script:TestResults = @()
-$Script:FailedTests = @()
-$Script:Warnings = @()
+#Requires -Version 5.1
 
-function Write-ValidationOutput {
+# ─────────────────────────────────────────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+$Script:Checks       = @()
+$Script:CriticalFail = $false
+
+function Add-CheckResult {
     param(
-        [string]$Message,
-        [ValidateSet('Header', 'Info', 'Success', 'Warning', 'Error', 'Test')]
-        [string]$Type = 'Info'
+        [string]$Name,
+        [ValidateSet('Pass','Warn','Fail')]
+        [string]$Status,
+        [string]$Detail = ''
     )
-    
+
+    $Script:Checks += [PSCustomObject]@{
+        Name   = $Name
+        Status = $Status
+        Detail = $Detail
+    }
+
+    if ($Status -eq 'Fail') {
+        $Script:CriticalFail = $true
+    }
+
     if ($Silent) { return }
-    
-    switch ($Type) {
-        'Header' {
-            Write-Host $Message -ForegroundColor Cyan
-        }
-        'Info' {
-            Write-Host "ℹ️  $Message" -ForegroundColor Gray
-        }
-        'Success' {
-            Write-Host "✅ $Message" -ForegroundColor Green
-        }
-        'Warning' {
-            Write-Host "⚠️  $Message" -ForegroundColor Yellow
-        }
-        'Error' {
-            Write-Host "❌ $Message" -ForegroundColor Red
-        }
-        'Test' {
-            Write-Host "🔍 $Message" -ForegroundColor Cyan
-        }
+
+    switch ($Status) {
+        'Pass' { $color = 'Green';  $icon = '✅' }
+        'Warn' { $color = 'Yellow'; $icon = '⚠ ' }
+        'Fail' { $color = 'Red';    $icon = '❌' }
+    }
+
+    if ($Detail) {
+        Write-Host ("{0} {1} - {2}" -f $icon, $Name, $Detail) -ForegroundColor $color
+    } else {
+        Write-Host ("{0} {1}" -f $icon, $Name) -ForegroundColor $color
     }
 }
 
-function Test-Requirement {
-    param(
-        [Parameter(Mandatory)]
-        [string]$Name,
-        [Parameter(Mandatory)]
-        [scriptblock]$Test,
-        [string]$Description = "",
-        [switch]$Critical,
-        [switch]$Warning
+function Write-Header {
+    if ($Silent) { return }
+
+    Clear-Host
+    Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║              DEEP CLEAN PRO - VALIDATION TOOL                ║" -ForegroundColor Cyan
+    Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Root path: $RootPath" -ForegroundColor Gray
+    if ($SkipNetwork) {
+        Write-Host "Network checks: SKIPPED" -ForegroundColor Yellow
+    } else {
+        Write-Host "Network checks: ENABLED" -ForegroundColor Gray
+    }
+    Write-Host ""
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Checks
+# ─────────────────────────────────────────────────────────────────────────────
+
+Write-Header
+
+# 1) OS Version
+try {
+    $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+    $caption = $os.Caption
+    $version = [version]$os.Version
+
+    if ($caption -notmatch 'Windows 10|Windows 11') {
+        Add-CheckResult -Name "OS Version" -Status Fail -Detail "Unsupported OS: $caption ($($os.Version)). Windows 10 or 11 required."
+    } elseif ($version.Major -lt 10) {
+        Add-CheckResult -Name "OS Version" -Status Fail -Detail "Unsupported OS version: $($os.Version). Windows 10 or 11 required."
+    } else {
+        Add-CheckResult -Name "OS Version" -Status Pass -Detail "$caption ($($os.Version))"
+    }
+} catch {
+    Add-CheckResult -Name "OS Version" -Status Warn -Detail "Could not query OS version: $($_.Exception.Message)"
+}
+
+# 2) PowerShell Version
+try {
+    $psv = $PSVersionTable.PSVersion
+    if ($psv.Major -lt 5 -or ($psv.Major -eq 5 -and $psv.Minor -lt 1)) {
+        Add-CheckResult -Name "PowerShell Version" -Status Fail -Detail "Found $psv. PowerShell 5.1 or later is required."
+    } else {
+        Add-CheckResult -Name "PowerShell Version" -Status Pass -Detail "PowerShell $psv"
+    }
+} catch {
+    Add-CheckResult -Name "PowerShell Version" -Status Warn -Detail "Could not read PSVersionTable: $($_.Exception.Message)"
+}
+
+# 3) Administrator Privileges
+try {
+    $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+    $isAdmin   = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+    if ($isAdmin) {
+        Add-CheckResult -Name "Administrator Privileges" -Status Pass -Detail "Running as Administrator"
+    } else {
+        Add-CheckResult -Name "Administrator Privileges" -Status Fail -Detail "Not running as Administrator. Deep Clean Pro requires admin rights."
+    }
+} catch {
+    Add-CheckResult -Name "Administrator Privileges" -Status Warn -Detail "Could not determine admin status: $($_.Exception.Message)"
+}
+
+# 4) Execution Policy (CurrentUser / Process)
+try {
+    $epProcess = Get-ExecutionPolicy -Scope Process -ErrorAction SilentlyContinue
+    $epUser    = Get-ExecutionPolicy -Scope CurrentUser -ErrorAction SilentlyContinue
+
+    # We don't enforce a specific policy, just warn if it's too restrictive
+    if ($epProcess -eq 'Undefined') {
+        Add-CheckResult -Name "Execution Policy (Process)" -Status Pass -Detail "Undefined (Deep Clean Pro sets a safe process-level policy)"
+    } else {
+        Add-CheckResult -Name "Execution Policy (Process)" -Status Pass -Detail $epProcess
+    }
+
+    if ($epUser -in 'Restricted','AllSigned') {
+        Add-CheckResult -Name "Execution Policy (CurrentUser)" -Status Warn -Detail "$epUser (scripts may require Bypass/RemoteSigned in this session)"
+    } else {
+        Add-CheckResult -Name "Execution Policy (CurrentUser)" -Status Pass -Detail $epUser
+    }
+} catch {
+    Add-CheckResult -Name "Execution Policy" -Status Warn -Detail "Could not query ExecutionPolicy: $($_.Exception.Message)"
+}
+
+# 5) TLS 1.2 Availability
+try {
+    # Try to enable TLS 1.2 for this session
+    [Net.ServicePointManager]::SecurityProtocol = `
+        [Net.ServicePointManager]::SecurityProtocol `
+        -bor [Net.SecurityProtocolType]::Tls12
+
+    if ([Net.ServicePointManager]::SecurityProtocol -band [Net.SecurityProtocolType]::Tls12) {
+        Add-CheckResult -Name "TLS 1.2 Support" -Status Pass -Detail "TLS 1.2 is enabled for this session"
+    } else {
+        Add-CheckResult -Name "TLS 1.2 Support" -Status Warn -Detail "TLS 1.2 could not be enabled. Online features may fail."
+    }
+} catch {
+    Add-CheckResult -Name "TLS 1.2 Support" -Status Warn -Detail "Error while checking TLS: $($_.Exception.Message)"
+}
+
+# 6) Root Path & Core Files
+try {
+    if (-not (Test-Path $RootPath)) {
+        Add-CheckResult -Name "Root Path" -Status Fail -Detail "Directory does not exist: $RootPath"
+    } else {
+        Add-CheckResult -Name "Root Path" -Status Pass -Detail $RootPath
+    }
+
+    $coreFiles = @(
+        'DeepCleanPro.ps1',
+        'Fix-WindowsPolicies.ps1',
+        'OneDriveNuke.ps1',
+        'Scripts\VALIDATE.ps1'
     )
-    
-    Write-ValidationOutput "Testing: $Name" -Type Test
-    
-    try {
-        $result = & $Test
-        $passed = [bool]$result
-        
-        $testResult = [PSCustomObject]@{
-            Name = $Name
-            Description = $Description
-            Passed = $passed
-            Critical = $Critical
-            Warning = $Warning
-            Error = $null
-        }
-        
-        if ($passed) {
-            Write-ValidationOutput "$Name - PASSED" -Type Success
+
+    foreach ($rel in $coreFiles) {
+        $full = Join-Path $RootPath $rel
+        if (Test-Path $full) {
+            Add-CheckResult -Name "File: $rel" -Status Pass -Detail "Found"
         } else {
-            if ($Critical) {
-                Write-ValidationOutput "$Name - FAILED (Critical)" -Type Error
-                $Script:FailedTests += $Name
-            } elseif ($Warning) {
-                Write-ValidationOutput "$Name - FAILED (Warning)" -Type Warning
-                $Script:Warnings += $Name
-            } else {
-                Write-ValidationOutput "$Name - FAILED" -Type Error
-                $Script:FailedTests += $Name
+            Add-CheckResult -Name "File: $rel" -Status Fail -Detail "Missing at $full"
+        }
+    }
+} catch {
+    Add-CheckResult -Name "Root Path / Files" -Status Warn -Detail "Error checking files: $($_.Exception.Message)"
+}
+
+# 7) Folders: Backups, Logs, Scripts
+try {
+    $folders = @(
+        'Backups',
+        'Logs',
+        'Scripts'
+    )
+
+    foreach ($f in $folders) {
+        $full = Join-Path $RootPath $f
+        if (Test-Path $full) {
+            # Also check write access
+            try {
+                $testFile = Join-Path $full "validate_test_$([guid]::NewGuid().ToString('N')).tmp"
+                'test' | Out-File -FilePath $testFile -Encoding ASCII -Force
+                Remove-Item $testFile -Force -ErrorAction SilentlyContinue
+                Add-CheckResult -Name "Folder: $f" -Status Pass -Detail "Exists and writable"
+            } catch {
+                Add-CheckResult -Name "Folder: $f" -Status Warn -Detail "Exists but write failed: $($_.Exception.Message)"
+            }
+        } else {
+            Add-CheckResult -Name "Folder: $f" -Status Warn -Detail "Missing: $full (will be created on first run)"
+        }
+    }
+} catch {
+    Add-CheckResult -Name "Folder Structure" -Status Warn -Detail "Error checking folders: $($_.Exception.Message)"
+}
+
+# 8) Optional: Network Connectivity (GitHub)
+if (-not $SkipNetwork) {
+    try {
+        $ok = $false
+        $targets = @(
+            'https://raw.githubusercontent.com',
+            'https://github.com'
+        )
+
+        foreach ($t in $targets) {
+            try {
+                $resp = Invoke-WebRequest -Uri $t -Method Head -TimeoutSec 5 -UseBasicParsing -ErrorAction Stop
+                if ($resp.StatusCode -ge 200 -and $resp.StatusCode -lt 400) {
+                    $ok = $true
+                    break
+                }
+            } catch {
+                # Ignore individual host failures, we only care if ALL fail
             }
         }
-        
-        $Script:TestResults += $testResult
-        return $passed
-    } catch {
-        $testResult = [PSCustomObject]@{
-            Name = $Name
-            Description = $Description
-            Passed = $false
-            Critical = $Critical
-            Warning = $Warning
-            Error = $_.Exception.Message
+
+        if ($ok) {
+            Add-CheckResult -Name "Network / GitHub" -Status Pass -Detail "GitHub reachable"
+        } else {
+            Add-CheckResult -Name "Network / GitHub" -Status Warn -Detail "Could not reach GitHub. Online features may not work."
         }
-        
-        Write-ValidationOutput "$Name - ERROR: $_" -Type Error
-        $Script:TestResults += $testResult
-        $Script:FailedTests += $Name
-        return $false
+    } catch {
+        Add-CheckResult -Name "Network / GitHub" -Status Warn -Detail "Error during network check: $($_.Exception.Message)"
     }
+} else {
+    Add-CheckResult -Name "Network / GitHub" -Status Warn -Detail "Network checks skipped by user"
 }
 
-# Start validation
-if (-not $Silent) {
-    Clear-Host
-    Write-ValidationOutput @"
-╔══════════════════════════════════════════════════════════════╗
-║        DEEP CLEAN PRO - SYSTEM VALIDATION v$($Script:Version)         ║
-╚══════════════════════════════════════════════════════════════╝
-"@ -Type Header
-}
-
-Write-ValidationOutput "`n=== SYSTEM REQUIREMENTS ===" -Type Header
-
-# 1. Administrator Privileges
-Test-Requirement -Name "Administrator Privileges" -Critical -Test {
-    $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-    $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-} -Description "Script requires administrator privileges to function"
-
-# 2. PowerShell Version
-Test-Requirement -Name "PowerShell Version" -Critical -Test {
-    $PSVersionTable.PSVersion.Major -ge 5 -and $PSVersionTable.PSVersion.Minor -ge 1
-} -Description "PowerShell 5.1 or higher required"
-
-# 3. Operating System
-Test-Requirement -Name "Windows OS" -Critical -Test {
-    $os = Get-CimInstance -ClassName Win32_OperatingSystem
-    $os.Caption -match "Windows" -and [int]$os.BuildNumber -ge 14393  # Windows 10 1607 minimum
-} -Description "Windows 10 version 1607 or higher required"
-
-# 4. .NET Framework
-Test-Requirement -Name ".NET Framework" -Warning -Test {
-    $release = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full\" -Name Release -ErrorAction SilentlyContinue
-    $release.Release -ge 461808  # .NET 4.7.2
-} -Description ".NET Framework 4.7.2 or higher recommended"
-
-Write-ValidationOutput "`n=== POWERSHELL CONFIGURATION ===" -Type Header
-
-# 5. Execution Policy
-Test-Requirement -Name "Execution Policy" -Test {
-    $policy = Get-ExecutionPolicy -Scope CurrentUser
-    $policy -in @('RemoteSigned', 'Unrestricted', 'Bypass')
-} -Description "Execution policy must allow script execution"
-
-# 6. Script Block Logging
-Test-Requirement -Name "Script Block Logging" -Warning -Test {
-    $regPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging"
-    if (Test-Path $regPath) {
-        $value = Get-ItemProperty -Path $regPath -Name "EnableScriptBlockLogging" -ErrorAction SilentlyContinue
-        $value.EnableScriptBlockLogging -eq 1
+# 9) Optional: Pester / PSScriptAnalyzer presence (soft checks)
+try {
+    $pester = Get-Module -ListAvailable -Name Pester | Select-Object -First 1
+    if ($pester) {
+        Add-CheckResult -Name "Pester Module" -Status Pass -Detail "Found: $($pester.Version)"
     } else {
-        $false  # Not configured is acceptable
+        Add-CheckResult -Name "Pester Module" -Status Warn -Detail "Pester not installed. Tests may be unavailable."
     }
-} -Description "Script block logging recommended for security"
-
-# 7. Environment Variables
-Test-Requirement -Name "Environment Variable Support" -Test {
-    # Test setting and reading environment variable
-    $testVar = "DCP_TEST_$(Get-Random)"
-    [System.Environment]::SetEnvironmentVariable($testVar, "test", "Process")
-    $result = [System.Environment]::GetEnvironmentVariable($testVar, "Process") -eq "test"
-    [System.Environment]::SetEnvironmentVariable($testVar, $null, "Process")
-    $result
-} -Description "Environment variables required for configuration"
-
-Write-ValidationOutput "`n=== SYSTEM RESOURCES ===" -Type Header
-
-# 8. Disk Space
-Test-Requirement -Name "Disk Space" -Test {
-    $drive = Get-PSDrive -Name C
-    ($drive.Free / 1GB) -gt 1  # At least 1GB free
-} -Description "Minimum 1GB free disk space required"
-
-# 9. Memory
-Test-Requirement -Name "Available Memory" -Warning -Test {
-    $os = Get-CimInstance -ClassName Win32_OperatingSystem
-    ($os.FreePhysicalMemory / 1MB) -gt 500  # At least 500MB free
-} -Description "Minimum 500MB free memory recommended"
-
-# 10. CPU Architecture
-Test-Requirement -Name "CPU Architecture" -Test {
-    $env:PROCESSOR_ARCHITECTURE -in @('AMD64', 'x64', 'IA64')
-} -Description "64-bit processor required"
-
-Write-ValidationOutput "`n=== REQUIRED FEATURES ===" -Type Header
-
-# 11. Windows Management Framework
-Test-Requirement -Name "WMF/PowerShell Core Features" -Test {
-    Get-Command -Name Get-CimInstance -ErrorAction SilentlyContinue
-} -Description "Windows Management Framework required"
-
-# 12. NuGet Provider
-Test-Requirement -Name "NuGet Package Provider" -Warning -Test {
-    Get-PackageProvider -Name NuGet -ErrorAction SilentlyContinue
-} -Description "NuGet provider recommended for module installation"
-
-# 13. Windows Defender
-Test-Requirement -Name "Windows Defender Access" -Warning -Test {
-    Get-Command -Name Get-MpComputerStatus -ErrorAction SilentlyContinue
-} -Description "Windows Defender cmdlets recommended for security checks"
-
-Write-ValidationOutput "`n=== NETWORK & SECURITY ===" -Type Header
-
-# 14. TLS 1.2 Support
-Test-Requirement -Name "TLS 1.2 Support" -Test {
-    try {
-        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-        $true
-    } catch {
-        $false
-    }
-} -Description "TLS 1.2 required for secure downloads"
-
-# 15. Internet Connectivity
-Test-Requirement -Name "Internet Connectivity" -Warning -Test {
-    Test-Connection -ComputerName "8.8.8.8" -Count 1 -Quiet -ErrorAction SilentlyContinue
-} -Description "Internet connection recommended for updates"
-
-# 16. GitHub Access
-Test-Requirement -Name "GitHub Access" -Warning -Test {
-    try {
-        $response = Invoke-WebRequest -Uri "https://api.github.com" -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
-        $response.StatusCode -eq 200
-    } catch {
-        $false
-    }
-} -Description "GitHub access recommended for updates"
-
-Write-ValidationOutput "`n=== FILE SYSTEM ACCESS ===" -Type Header
-
-# 17. Temp Directory Access
-Test-Requirement -Name "Temp Directory Access" -Test {
-    $testFile = Join-Path $env:TEMP "dcp_test_$(Get-Random).txt"
-    try {
-        "test" | Out-File -FilePath $testFile -Force
-        Remove-Item -Path $testFile -Force
-        $true
-    } catch {
-        $false
-    }
-} -Description "Write access to temp directory required"
-
-# 18. Program Files Access
-Test-Requirement -Name "System Directory Access" -Warning -Test {
-    # Check if we can read from system directories
-    Test-Path "$env:ProgramFiles"
-} -Description "Access to system directories recommended"
-
-# 19. Registry Access
-Test-Requirement -Name "Registry Access" -Test {
-    try {
-        Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name CurrentBuild -ErrorAction Stop
-        $true
-    } catch {
-        $false
-    }
-} -Description "Registry read access required"
-
-Write-ValidationOutput "`n=== DEEP CLEAN PRO FILES ===" -Type Header
-
-# 20. Main Script
-$scriptPath = Join-Path (Split-Path $PSScriptRoot -Parent) "DeepCleanPro.ps1"
-Test-Requirement -Name "Main Script Present" -Critical -Test {
-    Test-Path $scriptPath
-} -Description "DeepCleanPro.ps1 must be present"
-
-# 21. Policy Helper Script
-$policyScript = Join-Path (Split-Path $PSScriptRoot -Parent) "Fix-WindowsPolicies.ps1"
-Test-Requirement -Name "Policy Helper Script" -Warning -Test {
-    Test-Path $policyScript
-} -Description "Fix-WindowsPolicies.ps1 recommended"
-
-# 22. Script Syntax Validation
-if (Test-Path $scriptPath) {
-    Test-Requirement -Name "Script Syntax Valid" -Critical -Test {
-        $errors = $null
-        $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $scriptPath -Raw), [ref]$errors)
-        $errors.Count -eq 0
-    } -Description "Main script must have valid PowerShell syntax"
+} catch {
+    Add-CheckResult -Name "Pester Module" -Status Warn -Detail "Error checking Pester: $($_.Exception.Message)"
 }
 
-Write-ValidationOutput "`n=== WINDOWS SERVICES ===" -Type Header
-
-# 23. Windows Update Service
-Test-Requirement -Name "Windows Update Service" -Warning -Test {
-    $service = Get-Service -Name wuauserv -ErrorAction SilentlyContinue
-    $service -and $service.Status -ne 'Disabled'
-} -Description "Windows Update service should be available"
-
-# 24. Task Scheduler
-Test-Requirement -Name "Task Scheduler Service" -Warning -Test {
-    $service = Get-Service -Name Schedule -ErrorAction SilentlyContinue
-    $service -and $service.Status -eq 'Running'
-} -Description "Task Scheduler required for automated runs"
-
-# 25. WMI Service
-Test-Requirement -Name "WMI Service" -Test {
-    $service = Get-Service -Name Winmgmt -ErrorAction SilentlyContinue
-    $service -and $service.Status -eq 'Running'
-} -Description "Windows Management Instrumentation required"
-
-Write-ValidationOutput "`n=== DESKTOP SHORTCUTS ===" -Type Header
-
-# 26. Desktop Access
-Test-Requirement -Name "Desktop Access" -Warning -Test {
-    $desktop = [Environment]::GetFolderPath("Desktop")
-    Test-Path $desktop
-} -Description "Desktop access needed for shortcuts"
-
-# 27. Shortcut Creation Test
-Test-Requirement -Name "COM Object Support" -Warning -Test {
-    try {
-        $shell = New-Object -ComObject WScript.Shell
-        [System.Runtime.InteropServices.Marshal]::ReleaseComObject($shell) | Out-Null
-        $true
-    } catch {
-        $false
+try {
+    $pssa = Get-Module -ListAvailable -Name PSScriptAnalyzer | Select-Object -First 1
+    if ($pssa) {
+        Add-CheckResult -Name "PSScriptAnalyzer Module" -Status Pass -Detail "Found: $($pssa.Version)"
+    } else {
+        Add-CheckResult -Name "PSScriptAnalyzer Module" -Status Warn -Detail "PSScriptAnalyzer not installed. Static analysis may be unavailable."
     }
-} -Description "COM support needed for shortcut creation"
+} catch {
+    Add-CheckResult -Name "PSScriptAnalyzer Module" -Status Warn -Detail "Error checking PSScriptAnalyzer: $($_.Exception.Message)"
+}
 
-# Calculate results
-$totalTests = $Script:TestResults.Count
-$passedTests = ($Script:TestResults | Where-Object { $_.Passed }).Count
-$criticalFailed = ($Script:TestResults | Where-Object { $_.Critical -and -not $_.Passed }).Count
-$warningCount = $Script:Warnings.Count
+# ─────────────────────────────────────────────────────────────────────────────
+# Summary
+# ─────────────────────────────────────────────────────────────────────────────
 
-# Display summary
 if (-not $Silent) {
-    Write-ValidationOutput "`n" -Type Info
-    Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-    Write-Host "                      VALIDATION SUMMARY                      " -ForegroundColor White
-    Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-    
-    Write-Host "`n📊 Results:" -ForegroundColor Yellow
-    Write-Host "   Total Tests: $totalTests" -ForegroundColor White
-    Write-Host "   Passed: $passedTests" -ForegroundColor Green
-    Write-Host "   Failed: $($totalTests - $passedTests)" -ForegroundColor $(if ($totalTests - $passedTests -gt 0) { "Red" } else { "Green" })
-    Write-Host "   Critical Failures: $criticalFailed" -ForegroundColor $(if ($criticalFailed -gt 0) { "Red" } else { "Green" })
-    Write-Host "   Warnings: $warningCount" -ForegroundColor $(if ($warningCount -gt 0) { "Yellow" } else { "Green" })
-    
-    if ($criticalFailed -gt 0) {
-        Write-Host "`n❌ VALIDATION FAILED" -ForegroundColor Red
-        Write-Host "Critical requirements not met. Please address the following:" -ForegroundColor Red
-        $Script:TestResults | Where-Object { $_.Critical -and -not $_.Passed } | ForEach-Object {
-            Write-Host "  - $($_.Name): $($_.Description)" -ForegroundColor Red
-        }
-    } elseif ($Script:FailedTests.Count -gt 0) {
-        Write-Host "`n⚠️  VALIDATION PASSED WITH WARNINGS" -ForegroundColor Yellow
-        Write-Host "Some optional features may not work correctly:" -ForegroundColor Yellow
-        $Script:Warnings | ForEach-Object {
-            Write-Host "  - $_" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host "                    VALIDATION SUMMARY                         " -ForegroundColor White
+    Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+
+    $pass = $Script:Checks | Where-Object Status -eq 'Pass'
+    $warn = $Script:Checks | Where-Object Status -eq 'Warn'
+    $fail = $Script:Checks | Where-Object Status -eq 'Fail'
+
+    Write-Host ("Passed : {0}" -f $pass.Count) -ForegroundColor Green
+    Write-Host ("Warnings: {0}" -f $warn.Count) -ForegroundColor Yellow
+    Write-Host ("Failed : {0}" -f $fail.Count) -ForegroundColor Red
+
+    Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+
+    if ($fail.Count -eq 0) {
+        Write-Host "`n✅ Deep Clean Pro can run on this system." -ForegroundColor Green
+
+        if ($warn.Count -gt 0) {
+            Write-Host "⚠ Some non-critical issues were detected. Review the warnings above." -ForegroundColor Yellow
         }
     } else {
-        Write-Host "`n✅ ALL VALIDATION CHECKS PASSED" -ForegroundColor Green
-        Write-Host "System is fully compatible with Deep Clean Pro!" -ForegroundColor Green
-    }
-    
-    Write-Host "`n📝 Log saved to: $env:TEMP\DeepCleanValidation_$(Get-Date -Format 'yyyyMMdd').log" -ForegroundColor Gray
-}
-
-# Export results if requested
-if ($ReturnResults) {
-    return [PSCustomObject]@{
-        AllPassed = ($criticalFailed -eq 0)
-        TotalTests = $totalTests
-        PassedTests = $passedTests
-        FailedTests = $Script:FailedTests
-        Warnings = $Script:Warnings
-        CriticalFailures = $criticalFailed
-        Results = $Script:TestResults
+        Write-Host "`n❌ One or more critical issues detected. Fix them before running Deep Clean Pro." -ForegroundColor Red
     }
 }
 
-# Exit with appropriate code
-if ($criticalFailed -gt 0) {
+if ($Script:CriticalFail) {
     exit 1
 } else {
     exit 0
