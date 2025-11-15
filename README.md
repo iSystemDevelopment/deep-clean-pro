@@ -24,7 +24,7 @@ Deep Clean Pro is a **complete Windows optimization engine** designed for:
 * Developers 💻
 * Music producers 🎵
 * Video editors 📹
-* Office & productivity users 💼
+* Office users 💼
 * Technicians & sysadmins 🛠️
 * Everyday users who want a **faster PC** 🚀
 
@@ -34,124 +34,210 @@ Built with **safety-first** design:
 * Full WhatIf simulation
 * Service + registry rollback
 * Windows Update maintenance
-* Profiles for different workloads
-* Logging for all changes
+* Specialized performance profiles
+* Extensive logging
 
-**No telemetry. No ads. No trackers. No paywalls.**
+**No telemetry. No ads. No paywall. Always free.**
 
 ---
 
-# ⭐ **1. One-Click Installation (Fastest Method)**
+# ⭐ 1. One-Click Installation (Fastest)
 
-## 💡 Step 1 — Run PowerShell as Administrator
+## Step 1 — Run PowerShell as Administrator
 
 1. Press **Windows Key**
 2. Type **PowerShell**
 3. Right-click **Windows PowerShell**
-4. Click **Run as Administrator**
+4. Select **Run as administrator**
 
-## 💡 Step 2 — Paste this command
+## Step 2 — Paste and run:
 
 ```powershell
 irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex
 ```
 
 ✔ No downloads
-✔ No installation
-✔ Runs directly from GitHub
-✔ Fully safe & open-source
+✔ No installers
+✔ Always the latest version
+✔ Fully open-source
 
 ---
 
-# 🖱️ **2. Download Shortcut Pack (Easiest for Most Users)**
+# 🧠 Quick Quiz: What Do You Want to Fix?
 
-Don’t want to use commands?
-Download the pre-made shortcuts:
+Not sure which Deep Clean Pro mode to use?
+Answer these quick questions and pick the best option:
 
-### 📥 **Download All Shortcuts**
+### **1️⃣ Is your PC mainly for gaming?**
 
-👉 [https://github.com/iSystemDevelopment/deep-clean-pro/releases/latest/download/DeepClean-Shortcuts.zip](https://github.com/iSystemDevelopment/deep-clean-pro/releases/latest/download/DeepClean-Shortcuts.zip)
+✔ Yes → **🎮 [Gaming PC](#-gaming-pc)**
+✖ No → Continue ↓
+
+---
+
+### **2️⃣ Do you use programming tools?**
+
+(VS Code, Visual Studio, Node, Python, JetBrains, etc.)
+
+✔ Yes → **💻 [Development PC](#-development-pc)**
+✖ No → Continue ↓
+
+---
+
+### **3️⃣ Do you make music (DAW, ASIO, USB audio)?**
+
+✔ Yes → **🎵 [Music Production PC](#-music-production-pc)**
+✖ No → Continue ↓
+
+---
+
+### **4️⃣ Do you edit or render videos?**
+
+✔ Yes → **📹 [Video Editing PC](#-video-editing-pc)**
+✖ No → Continue ↓
+
+---
+
+### **5️⃣ Just want it faster and cleaner?**
+
+✔ Yes → **🚀 [Quick Fix Mode](#-quick-fix-mode)**
+✖ I want everything → **🔥 [Full Optimization](#-full-optimization)**
+
+---
+
+### 🧪 First time or nervous?
+
+Use **🧪 [Test Mode](#-test-mode-safe-preview)** — it shows everything **without making changes**.
+
+---
+
+### ☁️ Want to remove OneDrive completely?
+
+→ **☁️ [OneDrive Liberator](#-onedrive-liberator)**
+
+---
+
+# 🖥️ 2. Shortcut Pack (Beginner Friendly)
+
+📥 **Download now:**
+[https://github.com/iSystemDevelopment/deep-clean-pro/releases/latest/download/DeepClean-Shortcuts.zip](https://github.com/iSystemDevelopment/deep-clean-pro/releases/latest/download/DeepClean-Shortcuts.zip)
 
 Includes:
 
-| Shortcut              | Purpose                               |
-| --------------------- | ------------------------------------- |
-| 🚀 Quick Fix          | 5-minute cleanup                      |
-| 🎮 Gaming Mode        | Maximum FPS & reduced lag             |
-| 💻 Dev Mode           | Boosts coding tools & build time      |
-| 🎵 Music Mode         | Low-latency audio production          |
-| 📹 Video Mode         | Smooth editing & rendering            |
-| 💼 Office Mode        | Stable productivity profile           |
-| 🧪 Test Mode          | Preview changes with no risk          |
-| 🔥 Full Optimization  | Deepest cleanup (recommended monthly) |
-| ☁️ OneDrive Liberator | Remove OneDrive safely & permanently  |
+| Shortcut              | Purpose                  |
+| --------------------- | ------------------------ |
+| 🚀 Quick Fix          | 5-minute safe cleanup    |
+| 🎮 Gaming Mode        | Increase FPS, reduce lag |
+| 💻 Dev Mode           | For coders & IDEs        |
+| 🎵 Music Mode         | Low-latency audio        |
+| 📹 Video Mode         | Smooth editing/rendering |
+| 💼 Office Mode        | Productivity tuning      |
+| 🧪 Test Mode          | No-change preview        |
+| 🔥 Full Optimization  | Deep monthly clean       |
+| ☁️ OneDrive Liberator | Safely remove OneDrive   |
 
-All shortcuts automatically:
-
-* Run as administrator
-* Load the correct profile
-* Use custom icons
-* Apply safe defaults
-
-Run `Install-Shortcuts.bat` to add them to your Desktop.
+Run `Install-Shortcuts.bat` to add them to Desktop.
 
 ---
 
-# ⚙️ **3. Features & Capabilities**
+# 🎛️ 3. Choose Your Optimization Type
 
-## ✔ Complete Optimization Engine
+## 🎮 **Gaming PC**
 
-* System health diagnostics
-* Windows Update maintenance (optional)
-* Deep cleaning of temporary files
-* Registry performance tweaks
-* Service optimization (CIM-safe implementation)
-* Disk optimization & defragmentation
-* Startup program analysis
-* Search index rebuild
-* Driver update checks
-* GPO policy fixes (optional)
+Boost FPS & responsiveness.
 
-## ✔ Profiles for Every PC Type
-
-* 🎮 **Gaming** — FPS boost, low-latency, GPU tuning
-* 💻 **Development** — VS Code, JetBrains, Node, Python optimizations
-* 🎵 **Music** — DPC latency, USB/audio tweaks
-* 📹 **Video Editing** — file cache tuning, GPU timeouts
-* 💼 **Office** — balanced, low-noise, fast startup
-* 🚀 **Quick Fix** — safe 5-minute run
-* 🔥 **Full Optimization** — deepest cleanup
-
-## ✔ Safety Features
-
-* Automatic registry backups
-* Service configuration backups
-* Built-in WhatIf mode
-* Logging of all actions
-* Rollback-friendly design
+```powershell
+irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex; 
+DeepCleanPro.ps1 -Profile Gaming
+```
 
 ---
 
-# ☁️ **4. OneDrive Liberator (Optional)**
+## 💻 **Development PC**
 
-Want to remove OneDrive completely?
-Deep Clean Pro includes **OneDrive Liberator**, which:
+Optimized for coding workloads.
 
-* Moves ALL your OneDrive files to a local backup folder
-* Restores Desktop/Documents/Pictures to LOCAL folders
-* Uninstalls OneDrive fully
-* Removes Explorer sidebar
-* Deletes leftovers & cache
-* Blocks Microsoft from reinstalling it
-* Prompts for restart
-
-Your files remain safe here:
-
-```
-C:\Users\<YourName>\Documents\OneDrive-Backup-YYYY-MM-DD
+```powershell
+irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex; 
+DeepCleanPro.ps1 -Profile Development
 ```
 
-Run via shortcut or:
+---
+
+## 🎵 **Music Production PC**
+
+Reduce DPC latency & noise.
+
+```powershell
+irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex; 
+DeepCleanPro.ps1 -Profile Music
+```
+
+---
+
+## 📹 **Video Editing PC**
+
+Smoother editing + render stability.
+
+```powershell
+irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex; 
+DeepCleanPro.ps1 -Profile Video
+```
+
+---
+
+## 💼 **Office PC**
+
+Balanced performance.
+
+```powershell
+irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex; 
+DeepCleanPro.ps1 -Profile Office
+```
+
+---
+
+## 🚀 **Quick Fix Mode**
+
+Fast, safe, no reboot.
+
+```powershell
+irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex; 
+DeepCleanPro.ps1 -QuickMode
+```
+
+---
+
+## 🔥 **Full Optimization**
+
+Complete cleaning + tuning.
+
+```powershell
+irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex
+```
+
+---
+
+## 🧪 **Test Mode (Safe Preview)**
+
+Shows everything **without** making changes.
+
+```powershell
+irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex; 
+DeepCleanPro.ps1 -WhatIf
+```
+
+---
+
+# ☁️ OneDrive Liberator
+
+Safely remove OneDrive forever:
+
+* Moves files to local backup
+* Restores Desktop/Documents/Pictures
+* Removes OneDrive completely
+* Blocks it from reinstalling
+* 100% safe, backed up before changes
 
 ```powershell
 .\OneDriveNuke.ps1
@@ -159,164 +245,68 @@ Run via shortcut or:
 
 ---
 
-# 🧠 **5. Advanced Usage**
+# 🔧 Advanced Usage
 
-## Run with parameters
-
-```powershell
-.\DeepCleanPro.ps1 -Profile Gaming -QuickMode -NoReboot
-```
-
-## Run from internet with parameters
+### Run with no reboot:
 
 ```powershell
-$env:DCP_PROFILE='Gaming'
-irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex
+DeepCleanPro.ps1 -NoReboot
 ```
 
-## Invoke full Windows Update maintenance
+### Auto reboot when done:
 
 ```powershell
-.\DeepCleanPro.ps1 -RunWindowsUpdates
+DeepCleanPro.ps1 -AutoReboot
 ```
 
-## Simulate everything (no changes)
+### Run full update maintenance:
 
 ```powershell
-.\DeepCleanPro.ps1 -WhatIf
+DeepCleanPro.ps1 -RunWindowsUpdates
 ```
+
+More advanced commands see:
+👉 **/Docs/CLI-GUIDE.md**
+👉 **/Docs/EXAMPLES.md**
 
 ---
 
-# 🧩 **6. For Power Users & Technicians**
+# 🏢 Enterprise Deployment
 
-Deep Clean Pro supports:
+Supports:
 
-### ✔ Parallel job execution
+* GPO startup scripts
+* Intune / SCCM packages
+* Remote execution via PowerShell Remoting
+* Offline corporate mode
+* Weekly scheduled maintenance
 
-### ✔ Custom modules (Extensions/*.ps1)
-
-### ✔ Custom profiles
-
-### ✔ Remote execution via PowerShell Remoting
-
-### ✔ Local or domain deployment
-
-### ✔ SCCM / Intune packaging
-
-### ✔ Group Policy startup scripts
-
-### ✔ Compliance reporting
-
-See **ADVANCED-GUIDE.md** for full details.
+Full documentation:
+👉 **/Docs/ADVANCED-GUIDE.md**
 
 ---
 
-# 🏢 **7. Light Enterprise Deployment**
+# 🔒 Security
 
-### ✔ Group Policy Startup Script
-
-```powershell
-if (Test-NetConnection github.com -Port 443 -Quiet) {
-    Start-Process powershell.exe -WindowStyle Hidden -ArgumentList "-ExecutionPolicy Bypass -Command `"irm 'https://raw.githubusercontent.com/iSystemDevelopment/deep-clean-pro/main/DeepCleanPro.ps1' | iex`""
-}
-```
-
-### ✔ Intune / SCCM Package
-
-```xml
-<CommandLine>
-  powershell.exe -ExecutionPolicy Bypass -File DeepCleanPro.ps1 -Profile Office -QuickMode
-</CommandLine>
-```
-
-### ✔ Domain-Wide Execution
-
-```powershell
-$computers = Get-ADComputer -Filter * | Select Name
-Invoke-Command -ComputerName $computers.Name -ScriptBlock {
-    & "C:\DeepCleanPro\DeepCleanPro.ps1" -Profile Office -QuickMode
-}
-```
-
----
-
-# 🧪 **8. Testing & Validation**
-
-### Validate system compatibility
-
-```powershell
-C:\DeepCleanPro\Scripts\VALIDATE.ps1
-```
-
-### Run unit tests
-
-```powershell
-Invoke-Pester -Path .\Tests\
-```
-
----
-
-# 🔒 **9. Security**
-
-Deep Clean Pro implements:
-
+* No telemetry
 * TLS 1.2 enforced
-* Script integrity validation (optional module)
-* Strict WhatIf support
-* No remote code execution except installer
-* No telemetry, no analytics, no data sent anywhere
-* Full transparency (open-source MIT)
+* Every change backed up
+* Supports `-WhatIf` for safe testing
+* Validated by PSScriptAnalyzer & Pester
 
-Report security issues privately:
-📧 **[security@isystem.app](mailto:security@isystem.app)**
+See:
+👉 **/SECURITY.md**
 
 ---
 
-# 🤝 **10. Contributing**
+# 🤝 Contributing
 
-We welcome PRs!
+We welcome contributions!
 
-* Follow the style guidelines
-* Include tests for new features
-* Document changes
-* Submit PRs via GitHub
-
-See **CONTRIBUTING.md**.
+Please read:
+👉 **/CONTRIBUTING.md**
 
 ---
 
-# 📚 **11. Documentation**
+# 🎉 Enjoy Your Faster PC!
 
-* **Beginner Guide** – simple, non-technical
-* **Advanced Guide** – power users + enterprise
-* **Security Policy** – vulnerability reporting
-* **Wiki** – troubleshooting, FAQs, more
-
----
-
-# ⭐ **12. Support the Project**
-
-If Deep Clean Pro helped you:
-
-* ⭐ Star the repository
-* 🫶 Share it with friends
-* 🐛 Report bugs
-* 💡 Suggest features
-* 🔧 Contribute improvements
-
-**Your support keeps it free for everyone.**
-
----
-
-# 🏁 **13. License**
-
-MIT License — free to use, modify, and distribute.
-
----
-
-# 🎉 **Enjoy Your Faster PC!**
-
-Deep Clean Pro exists for one reason:
-
-> **Because you shouldn’t have to pay for software that simply makes your PC fast again.**
