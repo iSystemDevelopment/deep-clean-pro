@@ -7,7 +7,7 @@
 .PARAMETER TargetPath
     Path to Deep Clean Pro installation directory
 .PARAMETER GistLauncherURL
-    Raw URL of the GitHub Gist containing the launcher script
+    Raw URL of the launcher script (GitHub Gist or raw GitHub .ps1)
 .PARAMETER Silent
     Run without console output
 .EXAMPLE
@@ -61,15 +61,9 @@ function New-DCPShortcut {
     
     try {
         $shell = New-Object -ComObject WScript.Shell
-        $desktop = [Environment]::GetFolderPath("Desktop")
-        $shortcutPath = Join-Path $desktop "$Name.lnk"
+        $desktopPath = [Environment]::GetFolderPath('Desktop')
+        $shortcutPath = Join-Path $desktopPath "$Name.lnk"
         
-        # Remove existing shortcut if present
-        if (Test-Path $shortcutPath) {
-            Remove-Item -Path $shortcutPath -Force
-        }
-        
-        # Create shortcut
         $shortcut = $shell.CreateShortcut($shortcutPath)
         $shortcut.TargetPath = $TargetPath
         $shortcut.Arguments = $Arguments
@@ -108,42 +102,36 @@ function New-DCPShortcut {
 
 function New-LocalShortcuts {
     param(
-        [string]$ScriptPath
+        [string]$BasePath
     )
     
-    Write-ShortcutLog "`nCreating local execution shortcuts..." -Type Info
+    Write-ShortcutLog "`nCreating local Deep Clean Pro shortcuts..." -Type Info
     
-    $shortcuts = @(
-        @{
-            Name = "Deep Clean Pro"
-            Arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$ScriptPath`""
-            Description = "Run Deep Clean Pro - Full optimization mode"
-        },
-        @{
-            Name = "Deep Clean Pro (Quick)"
-            Arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$ScriptPath`" -QuickMode"
-            Description = "Run Deep Clean Pro - Quick optimization mode (5-10 minutes)"
-        },
-        @{
-            Name = "Deep Clean Pro (Test)"
-            Arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$ScriptPath`" -WhatIf"
-            Description = "Test Deep Clean Pro without making changes"
-        },
-        @{
-            Name = "Deep Clean Pro (No Reboot)"
-            Arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$ScriptPath`" -NoReboot"
-            Description = "Run Deep Clean Pro without automatic reboot"
-        }
+    $scripts = @(
+        @{ Name = "Deep Clean Pro (Full)";     Script = "DeepCleanPro.ps1";       Args = "";                          Desc = "Run Deep Clean Pro (full optimization mode)" },
+        @{ Name = "Deep Clean Pro - Quick";    Script = "DeepCleanPro.ps1";       Args = "-QuickMode -NoReboot";      Desc = "Quick mode (5-10 minutes, no reboot prompt)" },
+        @{ Name = "Deep Clean Pro - Gaming";   Script = "DeepCleanPro.ps1";       Args = "-Profile Gaming";           Desc = "Gaming optimizations" },
+        @{ Name = "Deep Clean Pro - Dev";      Script = "DeepCleanPro.ps1";       Args = "-Profile Development";      Desc = "Development optimizations" },
+        @{ Name = "Deep Clean Pro - Music";    Script = "DeepCleanPro.ps1";       Args = "-Profile Music";            Desc = "Music production optimizations" },
+        @{ Name = "Deep Clean Pro - Video";    Script = "DeepCleanPro.ps1";       Args = "-Profile Video";            Desc = "Video editing optimizations" },
+        @{ Name = "Deep Clean Pro - Office";   Script = "DeepCleanPro.ps1";       Args = "-Profile Office";           Desc = "Office/workstation optimizations" },
+        @{ Name = "Deep Clean Pro - Test";     Script = "DeepCleanPro.ps1";       Args = "-WhatIf";                   Desc = "Test mode (no changes made)" }
     )
     
     $created = 0
-    foreach ($shortcut in $shortcuts) {
-        if (New-DCPShortcut -Name $shortcut.Name `
-                            -TargetPath "powershell.exe" `
-                            -Arguments $shortcut.Arguments `
-                            -Description $shortcut.Description `
-                            -RunAsAdmin) {
-            $created++
+    foreach ($shortcut in $scripts) {
+        $scriptPath = Join-Path $BasePath $shortcut.Script
+        
+        if (Test-Path $scriptPath) {
+            if (New-DCPShortcut -Name $shortcut.Name `
+                                -TargetPath "powershell.exe" `
+                                -Arguments "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`" $($shortcut.Args)" `
+                                -Description $shortcut.Desc `
+                                -RunAsAdmin) {
+                $created++
+            }
+        } else {
+            Write-ShortcutLog "Script not found: $scriptPath" -Type Warning
         }
     }
     
@@ -157,9 +145,9 @@ function New-GitHubShortcuts {
     
     Write-ShortcutLog "`nCreating GitHub launcher shortcuts..." -Type Info
     
-    # Validate URL
-    if ($LauncherURL -notmatch '^https://gist\.githubusercontent\.com/.*\.ps1$') {
-        Write-ShortcutLog "Invalid Gist URL format. Must be a raw GitHub Gist URL ending in .ps1" -Type Error
+    # Validate URL: allow either Gist raw or raw GitHub script URLs ending in .ps1
+    if ($LauncherURL -notmatch '^https://(gist\.githubusercontent\.com|raw\.githubusercontent\.com)/.*\.ps1$') {
+        Write-ShortcutLog "Invalid launcher URL. Must be a raw GitHub URL ending in .ps1 (Gist or repository)." -Type Error
         return 0
     }
     
@@ -190,7 +178,6 @@ function New-GitHubShortcuts {
                             -TargetPath "powershell.exe" `
                             -Arguments $shortcut.BaseArgs `
                             -Description $shortcut.Description `
-                            -EnvironmentVariables $shortcut.EnvVars `
                             -RunAsAdmin) {
             $created++
         }
@@ -206,27 +193,21 @@ function New-UtilityShortcuts {
     
     Write-ShortcutLog "`nCreating utility shortcuts..." -Type Info
     
-    $shortcuts = @(
-        @{
-            Name = "Deep Clean Pro - Validate"
-            Script = "Scripts\VALIDATE.ps1"
-            Description = "Run system validation checks"
-        },
-        @{
-            Name = "Deep Clean Pro - Fix Policies"
-            Script = "Fix-WindowsPolicies.ps1"
-            Description = "Configure Windows policies for optimal execution"
-        }
+    $scripts = @(
+        @{ Name = "Deep Clean Pro - OneDrive Liberator"; Script = "OneDriveNuke.ps1"; Args = "";              Desc = "Safely remove OneDrive and move files locally" },
+        @{ Name = "Deep Clean Pro - Fix Policies";       Script = "Fix-WindowsPolicies.ps1"; Args = "";       Desc = "Repair broken local Windows policies" },
+        @{ Name = "Deep Clean Pro - Validate";           Script = "Scripts\\VALIDATE.ps1"; Args = "";         Desc = "Run Deep Clean Pro validation checks" }
     )
     
     $created = 0
-    foreach ($shortcut in $shortcuts) {
+    foreach ($shortcut in $scripts) {
         $scriptPath = Join-Path $BasePath $shortcut.Script
+        
         if (Test-Path $scriptPath) {
             if (New-DCPShortcut -Name $shortcut.Name `
                                 -TargetPath "powershell.exe" `
-                                -Arguments "-NoProfile -ExecutionPolicy RemoteSigned -File `"$scriptPath`"" `
-                                -Description $shortcut.Description `
+                                -Arguments "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`" $($shortcut.Args)" `
+                                -Description $shortcut.Desc `
                                 -RunAsAdmin) {
                 $created++
             }
@@ -244,18 +225,22 @@ try {
         Write-Host "`n╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
         Write-Host "║          DEEP CLEAN PRO - SHORTCUT CREATOR v1.0             ║" -ForegroundColor Cyan
         Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+        Write-Host "Target installation path: $TargetPath" -ForegroundColor Gray
+        
+        if ($GistLauncherURL) {
+            Write-Host "GitHub launcher URL:     $GistLauncherURL" -ForegroundColor Gray
+        }
     }
     
-    # Verify installation
-    $mainScript = Join-Path $TargetPath "DeepCleanPro.ps1"
-    if (-not (Test-Path $mainScript)) {
-        throw "DeepCleanPro.ps1 not found at $TargetPath"
+    if (-not (Test-Path $TargetPath)) {
+        Write-ShortcutLog "TargetPath does not exist: $TargetPath" -Type Error
+        exit 1
     }
     
     $totalCreated = 0
     
     # Create local shortcuts
-    $localCount = New-LocalShortcuts -ScriptPath $mainScript
+    $localCount = New-LocalShortcuts -BasePath $TargetPath
     $totalCreated += $localCount
     
     # Create GitHub shortcuts if URL provided
@@ -272,10 +257,11 @@ try {
     if (-not $Silent) {
         Write-Host "`n═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
         Write-Host "✅ Created $totalCreated desktop shortcuts successfully!" -ForegroundColor Green
+        Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
         
         if (-not $GistLauncherURL) {
             Write-Host "`n💡 Tip: To create online shortcuts, run this script with:" -ForegroundColor Yellow
-            Write-Host "   -GistLauncherURL `"<your-gist-raw-url>`"" -ForegroundColor Gray
+            Write-Host "   -GistLauncherURL `"<your-launcher-raw-url>`"" -ForegroundColor Gray
         }
         
         Write-Host "`n📝 All shortcuts have been configured to run as Administrator" -ForegroundColor Gray
