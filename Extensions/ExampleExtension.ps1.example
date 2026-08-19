@@ -1,0 +1,14 @@
+# Example Deep Clean Pro extension
+# Copy / rename this file (remove .example) into Extensions\ to activate.
+# Docs: docs/EXTENSIONS.md
+
+# Register a custom profile (optional):
+# $Script:CustomProfiles['MyStudio'] = { Write-ColorOutput 'Hello from MyStudio profile' -Type Info }
+
+Register-ExtensionHook -Stage 'AfterOptimize' -ScriptBlock {
+    Write-ColorOutput '[ExampleExtension] AfterOptimize hook fired' -Type Info
+}
+
+Register-ExtensionHook -Stage 'AfterSummary' -ScriptBlock {
+    Write-ColorOutput '[ExampleExtension] Done — customize me in Extensions\' -Type Debug
+}
